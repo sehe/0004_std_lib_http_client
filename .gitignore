@@ -1,0 +1,12 @@
+build_debug
+build_release
+.idea
+.venv
+Cargo.lock
+*pycache*
+src/python/build/
+*.bin
+benchmark.txt
+src.txt
+*.egg-info
+.coverage
