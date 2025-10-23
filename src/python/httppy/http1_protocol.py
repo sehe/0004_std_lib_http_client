@@ -1,6 +1,6 @@
 from .transport import Transport
 from .http_protocol import HttpProtocol, HttpRequest, SafeHttpResponse, UnsafeHttpResponse, HttpMethod
-from .errors import HttpParseError, ConnectionClosedError
+from .errors import HttpParseError, ConnectionClosedError, TransportError
 
 
 class Http1Protocol(HttpProtocol):
@@ -83,6 +83,8 @@ class Http1Protocol(HttpProtocol):
                 if self._content_length is not None and len(self._buffer) < self._header_size + self._content_length:
                     raise HttpParseError("Connection closed before full content length was received.")
                 break
+            except TransportError as e:
+                raise e
 
             if self._header_size == 0:
                 separator_pos = self._buffer.find(self._HEADER_SEPARATOR)

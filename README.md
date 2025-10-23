@@ -2525,7 +2525,7 @@ We now transition from C to C++. While the goals of our protocol layer remain id
 The C++ `Http1Protocol` class is defined as a class template, which is the first major departure from C's approach.
 
 ```cpp
-// From: <include/httpcpp/http1_protocol.hpp>
+// From: include/httpcpp/http1_protocol.hpp
 
 template<Transport T>
 class Http1Protocol {
@@ -2551,7 +2551,7 @@ private:
 The `build_request_string` method demonstrates the clarity and safety of using the C++ standard library for buffer manipulation.
 
 ```cpp
-// From: <include/httpcpp/http1_protocol.hpp>::Http1Protocol::build_request_string
+// From: include/httpcpp/http1_protocol.hpp::Http1Protocol::build_request_string
 
 void build_request_string(const HttpRequest& req) {
     buffer_.clear();
@@ -2653,3 +2653,589 @@ To illustrate the testing pattern, let's provide a detailed Arrange-Act-Assert b
 | **Assert** | `ASSERT_TRUE(result.has_value());`<br>Multiple `ASSERT_EQ` calls are used on the `status_code`, headers (`res.headers[0].first`, `res.headers[0].second`), and the body content of the returned `UnsafeHttpResponse` object. | Verify that the parser correctly deconstructed the raw byte stream from the server into a structured response object with the exact values we expect, confirming the parser's correctness. |
 
 This combination of fixtures for state management and typed tests for parameterization allows us to build a comprehensive and maintainable test suite that rigorously validates our protocol logic across different underlying transports.
+
+## **7.4 The Rust Implementation: Safety and Ergonomics by Default**
+
+Moving from C++ to Rust introduces another significant shift, primarily centered around **compile-time safety guarantees** enforced by Rust's unique ownership model and borrow checker. While sharing C++'s affinity for zero-cost abstractions and RAII, Rust pushes these concepts further, aiming to make entire classes of errors (like dangling pointers, data races, and iterator invalidation) impossible to represent in safe code. The `Http1Protocol` implementation in Rust reflects this safety-first philosophy while leveraging Rust's expressive type system and standard library.
+
+### **7.4.1 State, Construction, and Safety (Ownership & `Drop`)**
+
+Similar to the C++ version, the Rust `Http1Protocol` is a generic struct, defined in `src/rust/src/http1_protocol.rs`.
+
+```rust
+// From: src/rust/src/http1_protocol.rs
+
+pub struct Http1Protocol<T: Transport> { // Generic over Transport trait
+    transport: T, // Composition
+    buffer: Vec<u8>, // Standard library buffer
+    header_size: usize,
+    content_length: Option<usize>, // Explicit optionality
+}
+
+// Default implementation requires Transport to also be Default
+impl<T: Transport + Default> Default for Http1Protocol<T> {
+    fn default() -> Self {
+        Self {
+            transport: T::default(),
+            buffer: Vec::new(),
+            header_size: 0,
+            content_length: None,
+        }
+    }
+}
+
+impl<T: Transport> Http1Protocol<T> {
+    pub fn new(transport: T) -> Self {
+        Self {
+            transport,
+            buffer: Vec::with_capacity(1024), // Pre-allocate buffer
+            header_size: 0,
+            content_length: None,
+        }
+    }
+    // ...
+}
+```
+
+Key Rust features and parallels to C++ include:
+
+1.  **Zero-Cost Abstraction (`T: Transport`)**: The struct is generic over any type `T` that implements the `Transport` trait defined in `src/rust/src/transport.rs`. Like C++ templates constrained by concepts, this is resolved at compile time, allowing for flexible code reuse (working with `TcpTransport` or `UnixTransport`) without runtime overhead.
+2.  **Composition**: The `transport: T` field is owned directly by the struct, similar to the C++ version, providing potential cache-locality benefits compared to C's pointer-based approach.
+3.  **RAII via Ownership and `Drop`**: Rust enforces RAII through its strict ownership rules. When an `Http1Protocol` instance goes out of scope, its `transport` member is dropped. If the `transport` type (like `TcpStream` or `UnixStream` used by our implementations) implements the `Drop` trait, its `drop` method (analogous to a C++ destructor) is automatically called, ensuring the underlying socket is closed. This provides an even stronger guarantee against resource leaks than C++, as Rust's borrow checker prevents scenarios where ownership might become ambiguous through raw pointer misuse.
+4.  **Standard Library Types**: Rust's standard library provides robust core types. `Vec<u8>` is used for the dynamic buffer, offering memory safety and automatic management similar to `std::vector<std::byte>`. `Option<usize>` is Rust's idiomatic way to handle potentially absent values like `content_length`, preventing null-related errors at compile time, much like `std::optional` in C++. The `Default` trait implementation allows for easy default construction when the underlying transport also supports it.
+
+### **7.4.2 Request Serialization (`build_request_string`)**
+
+Serialization in Rust benefits from the standard library's formatting macros and the memory safety of `Vec<u8>`. The `build_request_string` private method demonstrates an idiomatic approach.
+
+```rust
+// From: src/rust/src/http1_protocol.rs
+
+fn build_request_string(&mut self, request: &HttpRequest) {
+    self.buffer.clear(); // Reset the buffer
+    let method_str = match request.method {
+        HttpMethod::Get => "GET",
+        HttpMethod::Post => "POST",
+    };
+
+    // Use the write! macro for efficient formatting into the Vec<u8>
+    // Note: Vec<u8> implements std::io::Write
+    write!(&mut self.buffer, "{} {} HTTP/1.1\r\n", method_str, request.path).unwrap();
+
+    for header in &request.headers {
+        write!(&mut self.buffer, "{}: {}\r\n", header.key, header.value).unwrap();
+    }
+
+    self.buffer.extend_from_slice(b"\r\n"); // Append final header separator
+
+    if !request.body.is_empty() && request.method == HttpMethod::Post {
+        self.buffer.extend_from_slice(request.body); // Append body
+    }
+}
+```
+
+Key features of this implementation include:
+
+* **`Vec<u8>` Management**: Similar to C++'s `std::vector`, Rust's `Vec` automatically manages memory. We `clear()` the buffer at the start and let the `write!` macro and `extend_from_slice` handle appending and potential reallocations safely.
+* **The `write!` Macro**: This macro is a powerful and idiomatic Rust feature for formatting data directly into any type that implements the `std::io::Write` trait (which `Vec<u8>` does). It's efficient, type-safe, and avoids the manual buffer size calculations and potential overflows associated with C's `snprintf`. The `.unwrap()` call is used here because failures during writes to an in-memory buffer like `Vec` are generally considered unrecoverable program errors (e.g., out of memory), and panicking is the standard Rust way to handle such fatal conditions.
+* **`extend_from_slice`**: For appending raw byte slices (like the final `\r\n` or the request body), `extend_from_slice` is used. It efficiently copies the slice contents into the vector, handling resizing if necessary.
+* **Safety and Clarity**: Compared to the C implementation, this approach significantly reduces the risk of buffer overflows and memory management errors, while arguably being more readable due to the high-level formatting macros. It achieves similar clarity to the C++ version using Rust's specific standard library features.
+
+### **7.4.3 The Rust Response Parser (`read_full_response`, `parse_unsafe_response`)**
+
+The Rust parser follows the same state machine logic established in the C version but executes it using Rust's standard library features, emphasizing safety and idiomatic error handling. The core logic is primarily contained within the `read_full_response` and `parse_unsafe_response` private methods.
+
+**The Parser Algorithm (Rust Adaptation)**
+
+```rust
+FUNCTION read_full_response(&mut self) -> Result<()>:
+    CLEAR internal buffer and reset state (header_size, content_length)
+
+    LOOP FOREVER:
+        CALCULATE needed buffer space
+        RESIZE buffer using Vec::resize
+        GET mutable slice to writable area
+
+        read_result = self.transport.read(write_area_slice)
+
+        MATCH read_result:
+            Ok(bytes_read) => UPDATE buffer length by truncating
+            Err(ConnectionClosed) =>
+                CHECK for premature close (content_length known but not met)
+                IF premature, RETURN HttpParseFailure
+                ELSE BREAK LOOP
+            Err(other_transport_error) => RETURN other_transport_error
+
+        IF headers not yet parsed (header_size == 0):
+            FIND separator position using windows(4).position()
+            IF separator found:
+                CALCULATE header_size
+                PARSE Content-Length using split, eq_ignore_ascii_case, from_utf8, parse
+                STORE in content_length
+
+        IF content_length is Some AND buffer length is sufficient:
+            BREAK LOOP
+
+    IF headers not found AND buffer not empty:
+        RETURN HttpParseFailure
+
+    RETURN Ok(())
+```
+
+**Deep Dive into `read_full_response`**
+
+This method reads from the transport until a complete HTTP response is buffered.
+
+```rust
+// From: src/rust/src/http1_protocol.rs
+
+fn read_full_response(&mut self) -> Result<()> {
+    self.buffer.clear();
+    self.header_size = 0;
+    self.content_length = None;
+
+    loop {
+        // 1. Buffer Management
+        let available_capacity = self.buffer.capacity() - self.buffer.len();
+        let read_amount = max(available_capacity, 1024); // Ensure we try to read a decent chunk
+        let old_len = self.buffer.len();
+        self.buffer.resize(old_len + read_amount, 0); // Extend buffer, filling with 0s
+
+        // 2. Read from Transport with Error Handling
+        let bytes_read = match self.transport.read(&mut self.buffer[old_len..]) {
+            Ok(n) => n,
+            Err(Error::Transport(TransportError::ConnectionClosed)) => {
+                self.buffer.truncate(old_len); // Remove the unused part of the buffer
+                // Check if connection closed prematurely
+                if self.content_length.is_some() && self.buffer.len() < self.header_size + self.content_length.unwrap() {
+                    return Err(Error::Http(HttpClientError::HttpParseFailure));
+                }
+                break; // Connection closed is a valid end if Content-Length isn't known or is met
+            }
+            Err(e) => { // Handle other transport errors
+                self.buffer.truncate(old_len);
+                return Err(e);
+            }
+        };
+
+        // Adjust buffer size to actual bytes read
+        self.buffer.truncate(old_len + bytes_read);
+
+        // 3. Header Parsing Logic
+        if self.header_size == 0 {
+            // Find header separator "\r\n\r\n"
+            if let Some(pos) = self.buffer.windows(4).position(|window| window == Self::HEADER_SEPARATOR) {
+                self.header_size = pos + 4;
+                let headers_view = &self.buffer[..self.header_size];
+
+                // Find Content-Length (simplified example)
+                for line in headers_view.split(|&b| b == b'\n').skip(1) { // Skip status line
+                    let line = if line.ends_with(b"\r") { &line[..line.len() - 1] } else { line };
+                    if line.is_empty() { break; } // End of headers
+
+                    if line.len() >= 15 && line[..15].eq_ignore_ascii_case(Self::HEADER_SEPARATOR_CL) {
+                        if let Some(colon_pos) = line.iter().position(|&b| b == b':') {
+                            let value_slice = &line[colon_pos + 1..];
+                            if let Some(start) = value_slice.iter().position(|&b| !b.is_ascii_whitespace()) {
+                                if let Ok(s) = std::str::from_utf8(&value_slice[start..]) {
+                                    if let Ok(len) = s.parse::<usize>() {
+                                        self.content_length = Some(len);
+                                        break; // Found Content-Length
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. Completion Check
+        if let Some(content_len) = self.content_length {
+            if self.buffer.len() >= self.header_size + content_len {
+                break; // We have the full body based on Content-Length
+            }
+        }
+        // If content_length is None, the loop continues until ConnectionClosed breaks it.
+    }
+
+    // Final validation
+    if self.header_size == 0 && !self.buffer.is_empty() {
+        return Err(Error::Http(HttpClientError::HttpParseFailure));
+    }
+
+    Ok(())
+}
+```
+
+* **Buffer Management**: Rust's `Vec` manages its own capacity. We `resize` to ensure space, get a mutable slice (`&mut self.buffer[old_len..]`) representing the writable area, and `truncate` back to the actual number of bytes read after the `transport.read` call.
+* **Error Handling**: The `match` statement elegantly handles the `Result` returned by `transport.read`. The `ConnectionClosed` case is handled specifically to check for premature closure, while other errors are propagated upwards using `return Err(e)`. The `?` operator could also be used here, but the explicit `match` allows for the specific `ConnectionClosed` logic.
+* **Header Parsing**: Finding the `\r\n\r\n` separator uses the `windows()` iterator adapter, which is idiomatic Rust for finding sequences in slices. Parsing `Content-Length` involves `split()`, `eq_ignore_ascii_case()` for case-insensitive comparison, and standard methods like `from_utf8` and `parse::<usize>` for converting the value, with error handling implicit in the chaining and `if let` constructs.
+
+**Deep Dive into `parse_unsafe_response` and `perform_request_safe`**
+
+These methods construct the final response objects, adhering to the safe/unsafe dichotomy.
+
+```rust
+// From: src/rust/src/http1_protocol.rs
+
+fn parse_unsafe_response<'a>(&'a self) -> Result<UnsafeHttpResponse<'a>> {
+    if self.header_size == 0 { /* ... error ... */ }
+
+    let headers_block = &self.buffer[..self.header_size - Self::HEADER_SEPARATOR.len()];
+    // ... (split status line and headers_block) ...
+    let status_line_str = std::str::from_utf8(status_line_bytes)?.trim_end();
+    // ... (parse status_code_str and status_message) ...
+    let status_code = status_code_str.parse::<u16>()?;
+
+    let headers = rest_of_headers_bytes
+        .split(|&b| b == b'\n')
+        .filter_map(|line| {
+            // ... (parse key/value bytes) ...
+            let key = std::str::from_utf8(key_bytes).ok()?;
+            let value = std::str::from_utf8(value_bytes).ok()?.trim();
+            Some(HttpHeaderView { key, value }) // Creates views (slices)
+        })
+        .collect();
+
+    let body = if let Some(len) = self.content_length {
+        &self.buffer[self.header_size..self.header_size + len] // Body slice
+    } else {
+        &self.buffer[self.header_size..] // Body slice until end
+    };
+
+    Ok(UnsafeHttpResponse { // Contains borrowed slices (&'a str, &'a [u8])
+        status_code,
+        status_message, // &'a str
+        headers,        // Vec<HttpHeaderView<'a>>
+        body,           // &'a [u8]
+        content_length: self.content_length,
+    })
+}
+
+// From: impl<T: Transport> HttpProtocol for Http1Protocol<T>
+fn perform_request_safe<'a>(&mut self, request: &'a HttpRequest) -> Result<SafeHttpResponse> {
+    let unsafe_res = self.perform_request_unsafe(request)?; // Get the unsafe response first
+
+    // Explicitly clone/copy data into owning types
+    let headers = unsafe_res.headers
+        .iter()
+        .map(|h| HttpOwnedHeader {
+            key: h.key.to_string(),     // String::from(&'a str) -> String
+            value: h.value.to_string(), // String::from(&'a str) -> String
+        })
+        .collect();
+
+    Ok(SafeHttpResponse {
+        status_code: unsafe_res.status_code,
+        status_message: unsafe_res.status_message.to_string(), // String::from(&'a str) -> String
+        body: unsafe_res.body.to_vec(),                  // Vec::from(&'a [u8]) -> Vec<u8>
+        headers,                                         // Vec<HttpOwnedHeader>
+        content_length: unsafe_res.content_length,
+    })
+}
+```
+
+* **`parse_unsafe_response`**: This function is responsible for parsing the buffered data and creating the `UnsafeHttpResponse`. It achieves zero-copy by creating string slices (`&str`) and byte slices (`&[u8]`) that borrow directly from the protocol's internal `buffer`. The lifetime parameter `'a` on `UnsafeHttpResponse<'a>` ensures that the compiler *guarantees* these borrowed slices cannot outlive the `Http1Protocol` instance they borrow from, preventing dangling references.
+* **`perform_request_safe`**: This method first calls `perform_request_unsafe` to get the borrowed views. Then, it explicitly allocates new memory and *copies* the data from the slices into owning types (`String`, `Vec<u8>`, `HttpOwnedHeader`) to construct the `SafeHttpResponse`. This ensures the returned object is self-contained and its lifetime is independent of the protocol object. Methods like `.to_string()` and `.to_vec()` are used for these conversions.
+
+### **7.4.4 Verifying the Rust Protocol Implementation**
+
+Rust's strong emphasis on safety extends to its testing practices, which are deeply integrated into the language and its tooling. Verification for the `Http1Protocol` primarily uses **integration testing**, similar to the C++ approach, validating the parser and serializer against a live, background server. Tests are typically co-located with the source code within `#[cfg(test)]` modules.
+
+* **Built-in Framework**: Rust includes a simple yet effective testing framework accessed via the `#[test]` attribute. Tests are functions within modules marked `#[cfg(test)]` which are only compiled during test builds. The `cargo test` command automatically discovers and runs these functions.
+* **Integration Testing**: Like the C++ tests, the Rust protocol tests start a lightweight server (either TCP or Unix) in a background thread for each test case. Helper functions (`setup_tcp_server`, `setup_unix_server`) encapsulate this setup logic.
+* **Synchronization**: To coordinate between the main test thread and the background server thread (e.g., for the server to send captured request data back to the test), Rust's standard library **channels** (`std::sync::mpsc::channel`) are used. These provide a safe, thread-based message passing mechanism.
+* **Parameterization via Macros**: To avoid duplicating test logic for both `TcpTransport` and `UnixTransport`, a declarative macro (`generate_http1_protocol_tests!`) is employed. This macro takes the transport type and server setup function as arguments and generates the entire suite of test functions for that specific transport, demonstrating a powerful metaprogramming technique for reducing boilerplate in Rust.
+* **Arrange-Act-Assert (AAA)**: Tests adhere to the AAA pattern. Let's examine `correctly_serializes_get_request` as an example:
+  * **Arrange**: The `setup_*_server` function (instantiated by the macro) starts the server, which is programmed to read the incoming request and send it back via a channel transmitter (`tx`). A channel (`tx`, `rx`) is created. The `Http1Protocol` client connects to the server. An `HttpRequest` struct is created.
+  * **Act**: `protocol.perform_request_unsafe(&request)` is called. This serializes the request, sends it, and attempts to parse a response (which is minimal in this test).
+  * **Assert**: `rx.recv().unwrap()` blocks until the server sends the captured request data via the channel. `assert_eq!` compares the received byte vector against the expected serialized HTTP request string, verifying the serialization logic. The `.unwrap()` calls are idiomatic in tests, converting potential `Err` results into panics, which correctly fail the test.
+
+This testing strategy, combining Rust's built-in features with standard concurrency primitives and metaprogramming, provides robust verification for the protocol implementation across different transport types.
+
+## **7.5 The Python Implementation: High-Level Abstraction and Dynamic Power**
+
+Finally, we arrive at the Python implementation of the `Http1Protocol`. Python, being a high-level, dynamically-typed language, prioritizes developer productivity and readability. Its standard library provides powerful abstractions that hide much of the low-level complexity explicitly managed in C and C++. The Python `Http1Protocol` leverages these features to offer a clean and idiomatic interface to HTTP/1.1 mechanics.
+
+### **7.5.1 State, Construction, and Dynamic Typing**
+
+The Python `Http1Protocol` class, defined in `src/python/httppy/http1_protocol.py`, manages its state using standard Python types.
+
+```python
+# From: src/python/httppy/http1_protocol.py
+
+class Http1Protocol(HttpProtocol):
+    # ... constants ...
+    def __init__(self, transport: Transport):
+        self._transport: Transport = transport
+        self._buffer: bytearray = bytearray() # Standard dynamic byte array
+        self._header_size: int = 0
+        self._content_length: int | None = None # Standard optional type hint
+    # ...
+```
+
+Key characteristics include:
+
+1.  **Standard Library Types**: State is managed using built-in Python types. `bytearray` serves as the dynamic buffer, automatically handling memory allocation and resizing as data is added. The type hint `int | None` clearly indicates that `_content_length` may or may not hold an integer value.
+2.  **Composition**: Like the C++ and Rust versions, the `_transport` object (an instance conforming to the `Transport` protocol) is held directly as a member variable (`self._transport`).
+3.  **Dynamic Typing**: Python's dynamic nature means there's no compile-time enforcement of the `Transport` contract for the `_transport` object. Correctness relies on runtime "duck typing" (if it walks like a duck and quacks like a duck, it's a duck) and, optionally, static analysis tools like Mypy using the `Transport` protocol definition.
+4.  **Resource Management**: Python uses garbage collection for memory management. However, releasing system resources like sockets relies on explicitly calling the `close()` method (or using context managers like `with`, although our `Http1Protocol` isn't designed as one). The `disconnect` method provides this explicit resource release mechanism by calling `self._transport.close()`. Relying solely on the garbage collector (via `__del__`) is generally discouraged for deterministic resource cleanup in Python.
+
+### **7.5.2 Request Serialization (`_build_request_string`)**
+
+Python's dynamic nature and rich string formatting capabilities make request serialization straightforward. The `_build_request_string` private method handles this using idiomatic Python features.
+
+```python
+# From: src/python/httppy/http1_protocol.py
+
+def _build_request_string(self, request: HttpRequest) -> None:
+    self._buffer = bytearray() # Reset the bytearray buffer
+
+    # Use f-string for readable formatting, then encode to bytes
+    request_line = f"{request.method.value} {request.path} HTTP/1.1\r\n"
+    self._buffer += request_line.encode('ascii')
+
+    for key, value in request.headers:
+        header_line = f"{key}: {value}\r\n"
+        self._buffer += header_line.encode('ascii') # Encode and append header
+
+    self._buffer += b"\r\n" # Append final header separator
+
+    if request.body and request.method == HttpMethod.POST:
+        self._buffer += request.body # Append body bytes directly
+```
+
+Key aspects of this Python implementation are:
+
+* **`bytearray` Management**: Python's `bytearray` is used as the mutable buffer. It automatically handles resizing when data is appended using the `+=` operator, abstracting away the manual memory management seen in C.
+* **f-strings and `.encode()`**: Modern Python f-strings provide a highly readable way to format the request line and headers. The resulting strings are then encoded (typically to ASCII or UTF-8 for HTTP headers, though ASCII is safer for protocol elements) into bytes before being appended to the `bytearray`.
+* **Direct Body Appending**: Since the `request.body` is expected to already be `bytes`, it can be directly appended to the `bytearray` without further encoding.
+* **Clarity and Conciseness**: Compared to C's `snprintf` and manual buffer management, or C++'s `std::vector::insert` with iterators/pointers, the Python version is often considered more concise and easier to read, leveraging high-level string operations.
+
+### **7.5.3 The Python Response Parser (`_read_full_response`, `_parse_unsafe_response`)**
+
+Python's parser mirrors the state machine logic but utilizes Python's built-in types and standard library methods for a higher-level implementation. The core parsing is handled by the `_read_full_response` and `_parse_unsafe_response` private methods.
+
+**The Parser Algorithm (Python Adaptation)**
+
+```python
+FUNCTION _read_full_response(self):
+    CLEAR self._buffer, reset self._header_size, self._content_length
+
+    LOOP FOREVER:
+        ENSURE self._buffer has space (implicitly handled by bytearray.extend)
+        CREATE memoryview slice for reading
+
+        TRY:
+            bytes_read = self._transport.read_into(writable_view)
+            IF bytes_read == 0: # Indicates connection closed by peer
+                CHECK for premature close (content_length known but not met)
+                IF premature, RAISE HttpParseError
+                ELSE BREAK LOOP
+        EXCEPT ConnectionClosedError: # Explicit error from transport
+            CHECK for premature close
+            IF premature, RAISE HttpParseError
+            ELSE BREAK LOOP
+        EXCEPT TransportError as e: # Other transport errors
+            RAISE e
+
+        TRUNCATE self._buffer to actual bytes read
+
+        IF headers not yet parsed (self._header_size == 0):
+            FIND separator position using self._buffer.find(HEADER_SEPARATOR)
+            IF separator found:
+                CALCULATE self._header_size
+                SEARCH for Content-Length using lower(), find(), slicing, int()
+                STORE in self._content_length
+
+        IF self._content_length is NOT None AND buffer length is sufficient:
+            BREAK LOOP
+
+    IF headers not found AND self._buffer is not empty:
+        RAISE HttpParseError
+```
+
+**Deep Dive into `_read_full_response`**
+
+This method reads from the transport into the internal `bytearray` until a full response is received.
+
+```python
+# From: src/python/httppy/http1_protocol.py
+
+def _read_full_response(self) -> None:
+    self._buffer.clear()
+    self._header_size = 0
+    self._content_length = None
+    read_chunk_size = 4096
+
+    while True:
+        old_len = len(self._buffer)
+        try:
+            # 1. Buffer Management & Read
+            # bytearray automatically grows; extend adds placeholder bytes
+            self._buffer.extend(b'\0' * read_chunk_size)
+            # Create a memoryview for efficient reading into the extended part
+            read_view = memoryview(self._buffer)
+            bytes_read = self._transport.read_into(read_view[old_len:])
+            del read_view # Release memoryview
+            # Truncate buffer back to actual data size
+            del self._buffer[old_len + bytes_read:]
+
+            # 2. Handle Connection Closed during read
+            if bytes_read == 0: # Standard socket way to signal close
+                if self._content_length is not None and len(self._buffer) < self._header_size + self._content_length:
+                    raise HttpParseError("Connection closed before full content length was received.")
+                break # Valid end if no CL or CL met
+
+        except ConnectionClosedError: # Specific error from our transport
+            if self._content_length is not None and len(self._buffer) < self._header_size + self._content_length:
+                raise HttpParseError("Connection closed before full content length was received.")
+            break # Valid end if no CL or CL met
+        except TransportError as e: # Propagate other transport errors
+             raise e
+
+        # 3. Header Parsing Logic
+        if self._header_size == 0:
+            separator_pos = self._buffer.find(self._HEADER_SEPARATOR)
+            if separator_pos != -1:
+                self._header_size = separator_pos + len(self._HEADER_SEPARATOR)
+
+                # Find Content-Length (case-insensitive search)
+                headers_block_lower = self._buffer[:self._header_size].lower()
+                cl_key_pos = headers_block_lower.find(self._HEADER_SEPARATOR_CL.lower())
+
+                if cl_key_pos != -1:
+                    line_end_pos = self._buffer.find(b'\r\n', cl_key_pos)
+                    if line_end_pos != -1:
+                        value_start_pos = cl_key_pos + len(self._HEADER_SEPARATOR_CL)
+                        value_slice = self._buffer[value_start_pos:line_end_pos]
+                        try:
+                            self._content_length = int(value_slice.strip())
+                        except ValueError:
+                            raise HttpParseError("Invalid Content-Length value")
+
+        # 4. Completion Check
+        if self._content_length is not None:
+            if len(self._buffer) >= self._header_size + self._content_length:
+                break # Body complete based on Content-Length
+
+    # Final validation
+    if self._header_size == 0 and self._buffer:
+        raise HttpParseError("Could not find header separator in response.")
+
+```
+
+* **Buffer Management**: Python's `bytearray` simplifies buffer growth; `extend()` handles allocations. `memoryview` is used to provide a zero-copy slice of the `bytearray` to the `transport.read_into` method for efficient reading. `del self._buffer[...]` is used to truncate the buffer back to the actual size.
+* **Error Handling**: Standard Python `try...except` blocks are used. `read_into` returning 0 is the conventional signal for a closed socket, while our custom `ConnectionClosedError` might be raised by the transport for clarity. Premature closure is checked in both cases.
+* **Header Parsing**: String searching methods like `find()` and slicing (`[:]`) are used directly on the `bytearray`. Case-insensitive search for `Content-Length` is done by creating a temporary lowercased copy of the header block. The value is parsed using standard Python `int()`.
+
+**Deep Dive into `_parse_unsafe_response` and `perform_request_safe`**
+
+These methods construct the response objects, using `memoryview` for the unsafe zero-copy approach and standard `bytes`/`str` for the safe copy.
+
+```python
+# From: src/python/httppy/http1_protocol.py
+
+def _parse_unsafe_response(self) -> UnsafeHttpResponse:
+    if self._header_size == 0:
+        raise HttpParseError("Cannot parse response with no headers.")
+
+    buffer_view = memoryview(self._buffer) # Create a view into the buffer
+
+    # Parse Status Line using find and slicing on the buffer/view
+    status_line_end = self._buffer.find(b'\r\n')
+    # ... (find first_space, second_space) ...
+    status_code = int(buffer_view[first_space + 1:second_space])
+    status_message = buffer_view[second_space + 1:status_line_end] # memoryview slice
+
+    # Parse Headers using find and slicing, creating memoryviews
+    headers = []
+    current_pos = status_line_end + 2
+    while current_pos < self._header_size:
+        line_end = self._buffer.find(b'\r\n', current_pos, self._header_size)
+        # ... (handle line_end == -1 or current_pos) ...
+        colon_pos = self._buffer.find(b':', current_pos, line_end)
+        if colon_pos != -1:
+            key = buffer_view[current_pos:colon_pos] # memoryview slice
+            # ... (find value start, skipping whitespace) ...
+            value = buffer_view[value_start:line_end] # memoryview slice
+            headers.append((key, value))
+        current_pos = line_end + 2
+
+    # Create body memoryview slice
+    if self._content_length is not None:
+        body_end = self._header_size + self._content_length
+        body = buffer_view[self._header_size:body_end]
+    else:
+        body = buffer_view[self._header_size:]
+
+    return UnsafeHttpResponse( # Contains memoryviews referencing _buffer
+        status_code=status_code,
+        status_message=status_message,
+        headers=headers,
+        body=body,
+        content_length=self._content_length,
+    )
+
+# From: class Http1Protocol(HttpProtocol):
+def perform_request_safe(self, request: HttpRequest) -> SafeHttpResponse:
+    unsafe_res = self.perform_request_unsafe(request) # Get unsafe response first
+
+    # Convert memoryviews to owning bytes/str objects (performs copies)
+    status_message = unsafe_res.status_message.tobytes().decode('ascii')
+    body = unsafe_res.body.tobytes()
+    headers = [
+        (key.tobytes().decode('ascii'), value.tobytes().decode('ascii'))
+        for key, value in unsafe_res.headers
+    ]
+
+    return SafeHttpResponse( # Contains owning str and bytes
+        status_code=unsafe_res.status_code,
+        status_message=status_message,
+        body=body,
+        headers=headers,
+        content_length=unsafe_res.content_length,
+    )
+```
+
+* **`_parse_unsafe_response`**: This method creates the `UnsafeHttpResponse`. The key feature is the use of `memoryview` objects. Slicing the `buffer_view` creates new `memoryview` objects for `status_message`, header keys/values, and `body` **without copying the underlying byte data**. These views reference the data still held within the protocol object's `_buffer`.
+* **`perform_request_safe`**: This method implements the "safe" copy. It first calls `perform_request_unsafe`. Then, it explicitly converts the `memoryview` objects from the unsafe response into standard Python `str` (for text like status message and headers, using `.tobytes().decode('ascii')`) and `bytes` (for the body, using `.tobytes()`). These conversions create **new, independent objects**, copying the data and ensuring the `SafeHttpResponse` can outlive the protocol object's internal buffer state.
+
+### **7.5.4 Verifying the Python Protocol Implementation**
+
+Python benefits from a mature testing ecosystem, with **Pytest** being the de facto standard. Verification of the `Http1Protocol` uses Pytest's features for fixtures and parameterization to implement an **integration testing** strategy, much like the C++ and Rust versions. Tests are located in `src/python/tests/test_http1_protocol.py`.
+
+* **Pytest Framework**: Pytest simplifies test writing with minimal boilerplate. It automatically discovers test functions (typically those prefixed with `test_`) and provides powerful features like fixtures.
+* **Fixtures (`server_factory`)**: A fixture, often defined using the `@pytest.fixture` decorator, provides a reusable setup and teardown mechanism for tests. Our `server_factory` fixture encapsulates the logic for starting a background server thread (handling both TCP and Unix sockets based on parameterization) and yielding necessary details (like host/port or socket path) to the test function. This ensures each test runs against a clean server instance.
+* **Integration Testing**: Tests validate the protocol by making requests against the live background server started by the `server_factory` fixture, confirming the end-to-end serialization and parsing logic.
+* **Synchronization (`queue.Queue`)**: Python's standard library `queue.Queue` is used for safe communication between the main test thread and the background server thread. The server handler puts received data onto the queue, and the test thread uses `queue.get()` to block until the data arrives, allowing assertions on captured requests or responses.
+* **Parameterization (`@pytest.mark.parametrize`)**: Pytest's parameterization decorator is used to run the same test function with different inputs, in this case, different transport classes (`TcpTransport`, `UnixTransport`). This allows testing the protocol's behavior independently of the underlying transport layer without duplicating test code.
+* **Arrange-Act-Assert (AAA)**: Tests are structured following the AAA pattern. For instance, in `test_parses_response_with_content_length`:
+  * **Arrange**: The `@pytest.mark.parametrize` decorator selects the `transport_class`. The `server_factory` fixture (automatically invoked by Pytest because it's an argument to the test function) starts the appropriate background server, programming it with a specific `handler` lambda that sends a canned response. The `Http1Protocol` is instantiated and connected to the server.
+  * **Act**: `protocol.perform_request_unsafe(req)` sends a request and receives/parses the server's response.
+  * **Assert**: Standard Python `assert` statements check the `status_code`, headers, and `body` of the returned `UnsafeHttpResponse` against the expected values from the canned response.
+
+This combination of Pytest's features allows for clean, maintainable, and thorough integration tests that validate the Python protocol implementation's correctness in a realistic context.
+
+## **7.6 Consolidated Test Reference: C++, Rust, & Python Integration Tests**
+
+As discussed in the implementation sections, the verification strategies for the C++, Rust, and Python protocol layers rely heavily on **integration testing**. Unlike the C tests, which extensively used mocking via the `HttpcSyscalls` abstraction, these higher-level language tests validate the `Http1Protocol` implementations by interacting with live, background servers. This approach confirms the correct behavior of request serialization and response parsing when operating over a real byte stream.
+
+The following table provides a comparative overview of how key functionalities are tested across these three languages. It highlights the common verification goals while showcasing the distinct idioms and tools used in each testing ecosystem (GoogleTest for C++, Rust's built-in framework, and Pytest for Python). The structure follows the Arrange-Act-Assert (AAA) pattern where applicable.
+
+| Test Purpose                                                                    | C++ Details (GoogleTest)                                                                                                                                                                                                                                                                                       | Rust Details (Built-in `#[test]`)                                                                                                                                                                                                                                                                                                            | Python Details (Pytest)                                                                                                                                                                                                                                                                      |
+| :------------------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Verifies successful connection & disconnection via protocol interface.** | **Arrange**: `StartServer` in fixture sets up background server. `Http1Protocol` created in fixture.<br>**Act**: `protocol_.connect(...)` then `protocol_.disconnect()`.<br>**Assert**: `ASSERT_TRUE(connect_result.has_value())`, `ASSERT_TRUE(disconnect_result.has_value())`.                               | **Arrange**: `setup_*_server` helper starts background server. `Http1Protocol` created.<br>**Act**: `protocol.connect(...)` then `protocol.disconnect()`.<br>**Assert**: `assert!(...).is_ok()` checks both results.                                                                                                                | **Arrange**: `server_factory` fixture starts background server. `Http1Protocol` created.<br>**Act**: `protocol.connect(...)` then `protocol.disconnect()`.<br>**Assert**: Test passes if no exceptions are raised during connect/disconnect.                                                        |
+| **Verifies request fails if protocol is not connected.** | **Arrange**: `Http1Protocol` created, `connect` not called. `HttpRequest` created.<br>**Act**: `protocol_.perform_request_unsafe(req)`.<br>**Assert**: `ASSERT_FALSE(result.has_value())`, check error type is `TransportError::SocketWriteFailure` using `std::get_if`.                                     | **Arrange**: `Http1Protocol` created, `connect` not called. `HttpRequest` created.<br>**Act**: `protocol.perform_request_unsafe(&request)`.<br>**Assert**: `assert!(result.is_err())`, `assert!(matches!(... Error::Transport(TransportError::SocketWriteFailure)))`.                                                    | **Arrange**: `Http1Protocol` created, `connect` not called. `HttpRequest` created.<br>**Act/Assert**: `with pytest.raises(TransportError, match="Cannot write...")` context manager wraps `protocol.perform_request_unsafe(req)`.                                                    |
+| **Verifies correct serialization of a GET request (method, path, headers).** | **Arrange**: `StartServer` lambda captures request via `read` & signals via `std::promise`. Client connects. `HttpRequest` created.<br>**Act**: `protocol_.perform_request_unsafe(req)`.<br>**Assert**: `future.wait()`, `ASSERT_EQ` compares server's `captured_request_` to expected string.              | **Arrange**: `setup_*_server` closure captures request via `stream.read` & sends via `mpsc::channel`. Client connects. `HttpRequest` created.<br>**Act**: `protocol.perform_request_unsafe(&request)`.<br>**Assert**: `rx.recv().unwrap()`, `assert_eq!` compares received `Vec<u8>` to expected `b""` literal.                     | **Arrange**: `server_factory` handler captures request via `recv` & puts on `queue.Queue`. Client connects. `HttpRequest` created.<br>**Act**: `protocol.perform_request_unsafe(req)`.<br>**Assert**: `request_queue.get()`, `assert` compares received `bytes` to expected `b""` literal. |
+| **Verifies correct serialization of a POST request (method, path, headers, body).** | **Arrange**: Similar to GET, server captures request. `HttpRequest` created with body and `Content-Length` header.<br>**Act**: `protocol_.perform_request_unsafe(req)`.<br>**Assert**: `future.wait()`, `ASSERT_EQ` compares `captured_request_` to expected string including body.                      | **Arrange**: Similar to GET, server captures request. `HttpRequest` created with body `&[u8]` and `Content-Length` header.<br>**Act**: `protocol.perform_request_unsafe(&request)`.<br>**Assert**: `rx.recv().unwrap()`, `assert_eq!` compares received `Vec<u8>` to expected `b""` literal including body.                        | **Arrange**: Similar to GET, server captures request. `HttpRequest` created with `body` `bytes` and `Content-Length` header.<br>**Act**: `protocol.perform_request_unsafe(req)`.<br>**Assert**: `request_queue.get()`, `assert` compares received `bytes` to expected `b""` literal including body.    |
+| **Verifies successful parsing (basic response with `Content-Length`).** | **Arrange**: `StartServer` lambda sends canned response string. Client connects.<br>**Act**: `protocol_.perform_request_unsafe(req)`.<br>**Assert**: `ASSERT_TRUE(result.has_value())`; `ASSERT_EQ` checks on `status_code`, `status_message`, header key/values, and body content (`std::string_view`, `std::span`). | **Arrange**: `setup_*_server` closure sends canned `b""` literal response. Client connects.<br>**Act**: `protocol.perform_request_unsafe(&request)`.<br>**Assert**: `assert!(result.is_ok())`; `assert_eq!` checks on `status_code`, `status_message`, header key/values, and body content (`&'a str`, `&'a [u8]`).              | **Arrange**: `server_factory` handler sends canned `b""` literal response. Client connects.<br>**Act**: `protocol.perform_request_unsafe(req)`.<br>**Assert**: Standard `assert` checks on `status_code`, `.tobytes()` of `status_message`, header keys/values, and `body` (`memoryview`).                |
+| **Verifies successful parsing (body terminated by connection close).** | **Arrange**: `StartServer` lambda sends response with `Connection: close`, no `Content-Length`, then closes socket. Client connects.<br>**Act**: `protocol_.perform_request_unsafe(req)`.<br>**Assert**: `ASSERT_TRUE(result.has_value())`, check `status_code`, `body` content matches expected.             | **Arrange**: `setup_*_server` closure sends response with `Connection: close`, no `Content-Length`, drops stream. Client connects.<br>**Act**: `protocol.perform_request_unsafe(&request)`.<br>**Assert**: `assert!(result.is_ok())`, check `status_code`, `body` content matches expected.                                 | **Arrange**: `server_factory` handler sends response with `Connection: close`, no `Content-Length`, closes socket. Client connects.<br>**Act**: `protocol.perform_request_unsafe(req)`.<br>**Assert**: Standard `assert` checks on `status_code`, `body.tobytes()` matches expected.              |
+| **Verifies handling fragmented reads.** | *(Implicitly tested via OS buffer behavior in integration tests, but explicitly tested via mock transport in C)* | **Arrange**: `setup_*_server` sends response in multiple small `write_all` calls with delays. Client connects.<br>**Act**: `protocol.perform_request_unsafe(&request)`.<br>**Assert**: `assert!(result.is_ok())`, full response content (headers, body) is correctly parsed despite fragmentation.                                  | **Arrange**: `server_factory` handler sends response in multiple small `sendall` calls with `time.sleep()`. Client connects.<br>**Act**: `protocol.perform_request_unsafe(req)`.<br>**Assert**: Standard `assert` checks show full response content is correctly parsed.                        |
+| **Verifies parsing complex status lines and multiple headers.** | **Arrange**: `StartServer` sends canned response (e.g., `404 Not Found`) with multiple distinct headers.<br>**Act**: `protocol_.perform_request_unsafe(req)`.<br>**Assert**: `ASSERT_EQ` on `status_code`, `status_message`, and each parsed header key/value pair.                           | **Arrange**: `setup_*_server` sends canned response with multiple headers.<br>**Act**: `protocol.perform_request_unsafe(&request)`.<br>**Assert**: `assert_eq!` on `status_code`, `status_message`, and each parsed header key/value pair.                                                                              | **Arrange**: `server_factory` sends canned response with multiple headers.<br>**Act**: `protocol.perform_request_unsafe(req)`.<br>**Assert**: Standard `assert` on `status_code`, `status_message.tobytes()`, and `tobytes()` of each header key/value pair.                                   |
+| **Verifies parsing `Content-Length: 0` response.** | **Arrange**: `StartServer` sends canned response with `Content-Length: 0` and empty body.<br>**Act**: `protocol_.perform_request_unsafe(req)`.<br>**Assert**: Check `status_code`, relevant headers, `ASSERT_TRUE(res.body.empty())`.                                                        | **Arrange**: `setup_*_server` sends canned response with `Content-Length: 0`.<br>**Act**: `protocol.perform_request_unsafe(&request)`.<br>**Assert**: Check `status_code`, headers, `assert!(res.body.is_empty())`.                                                                                                 | **Arrange**: `server_factory` sends canned response with `Content-Length: 0`.<br>**Act**: `protocol.perform_request_unsafe(req)`.<br>**Assert**: Check `status_code`, headers, `assert res.body.tobytes() == b""`.                                                                      |
+| **Verifies handling response larger than initial buffer.** | **Arrange**: `StartServer` sends response with body \> initial buffer size. Client connects.<br>**Act**: `protocol_.perform_request_unsafe(req)`.<br>**Assert**: Check `status_code`, `ASSERT_EQ(res.body.size(), large_body.size())`, compare body content.                                        | **Arrange**: `setup_*_server` sends large response. Client connects.<br>**Act**: `protocol.perform_request_unsafe(&request)`.<br>**Assert**: Check `status_code`, `assert_eq!(res.body.len(), large_body.len())`, compare body content.                                                                                 | **Arrange**: `server_factory` sends large response. Client connects.<br>**Act**: `protocol.perform_request_unsafe(req)`.<br>**Assert**: Check `status_code`, `assert len(res.body) == len(large_body)`, compare `res.body.tobytes()`.                                                     |
+| **Verifies failure on premature connection close (bad `Content-Length`).** | **Arrange**: `StartServer` sends headers indicating large `Content-Length` but sends short body and closes connection.<br>**Act**: `protocol_.perform_request_unsafe(req)`.<br>**Assert**: `ASSERT_FALSE(result.has_value())`, check error is `HttpClientError::HttpParseFailure`.                    | **Arrange**: `setup_*_server` sends headers with large `Content-Length`, short body, drops stream.<br>**Act**: `protocol.perform_request_unsafe(&request)`.<br>**Assert**: `assert!(result.is_err())`, `assert!(matches!(... Error::Http(HttpClientError::HttpParseFailure)))`.                                                   | **Arrange**: `server_factory` sends headers with large `Content-Length`, short body, closes socket.<br>**Act/Assert**: `with pytest.raises(HttpParseError, match="Connection closed before full content length...")` wraps `protocol.perform_request_unsafe(req)`.                           |
+| **Verifies failure if connection closes during headers.** | *(Implicitly tested by integration tests, explicitly by C mock tests)* | *(Implicitly tested by integration tests, explicitly by C mock tests)* | **Arrange**: `server_factory` sends incomplete headers then closes socket.<br>**Act/Assert**: `with pytest.raises(HttpParseError, match="Could not find header separator...")` wraps `protocol.perform_request_unsafe(req)`.                                                    |
+| **Verifies distinction between safe (copy) & unsafe (view) responses.** | **Arrange**: Perform a request, server sends known body.<br>**Act**: `protocol_.perform_request_safe(req)`.<br>**Assert**: Check response content. `ASSERT_NE(res.body.data(), protocol_.get_internal_buffer_ptr_for_test())` confirms body is a copy.                                           | **Arrange**: Perform a request, server sends known body.<br>**Act**: `protocol.perform_request_safe(&request)`.<br>**Assert**: Check response content (`Vec<u8>`). `assert_ne!(res.body.as_ptr(), protocol.get_internal_buffer_ptr_for_test())` confirms body is a copy.                                                            | **Arrange**: Perform a request, server sends known body.<br>**Act**: `protocol.perform_request_safe(req)`.<br>**Assert**: Check response content (`bytes`). Clear internal `protocol._buffer`. `assert res.body == expected_body` confirms the copy is independent.                             |
