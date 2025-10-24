@@ -26,7 +26,7 @@ CLIENT_CORE=3
 REALTIME_PRIORITY=99
 
 # --- Workload Size Definitions ---
-SMALL_MIN=64; SMALL_MAX=256
+SMALL_MIN=64; SMALL_MAX=8192
 LARGE_MIN=500000; LARGE_MAX=1000000
 MIXED_MIN=64; MIXED_MAX=1000000
 
@@ -60,8 +60,8 @@ function run_benchmark_scenario {
 
     # TODO: --cap-add=SYS_NICE
     # chrt -f ${REALTIME_PRIORITY}
-    local server_prefix="taskset -c ${SERVER_CORE}"
-    local client_prefix="taskset -c ${CLIENT_CORE}"
+    local server_prefix="sudo taskset -c ${SERVER_CORE}"
+    local client_prefix="sudo taskset -c ${CLIENT_CORE}"
 
     for transport in "tcp" "unix"; do
         if [ "$transport" == "tcp" ]; then
@@ -114,10 +114,6 @@ function run_benchmark_scenario {
 
 # --- Main Execution ---
 
-if [ "$EUID" -ne 0 ]; then
-  echo "This script needs to be run with sudo for real-time priority and CPU settings."
-  exec sudo "$0" "$@"
-fi
 
 # Copy the functions and run them outside your container
 #trap restore_default_governor EXIT
@@ -127,6 +123,7 @@ cd "$BUILD_DIR"
 mkdir -p "$LATENCY_DIR"
 cmake --build . &> /dev/null
 ../.venv/bin/python3 -m pip install wheelhouse/httppy*.whl --force-reinstall &> /dev/null
+rm -rf ../src/python/build
 
 # Throughput Scenarios
 run_benchmark_scenario "throughput_balanced_large" $LARGE_MIN $LARGE_MAX $LARGE_MIN $LARGE_MAX
