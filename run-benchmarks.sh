@@ -90,7 +90,8 @@ function run_benchmark_scenario {
         # C++
         commands+=("$client_prefix ./benchmark/httpcpp_client --host ${host_arg} --port ${port_arg} ${common_args_our_clients} --output-file ${output_prefix}_httpcpp_${transport}_${scenario_name}_safe.bin")
         commands+=("$client_prefix ./benchmark/httpcpp_client --host ${host_arg} --port ${port_arg} ${common_args_our_clients} --output-file ${output_prefix}_httpcpp_${transport}_${scenario_name}_unsafe.bin --unsafe")
-        commands+=("$client_prefix ./benchmark/boost_client --host ${host_arg} --port ${port_arg} ${common_args_our_clients} --output-file ${output_prefix}_boost_${transport}_${scenario_name}.bin")
+        commands+=("$client_prefix ./benchmark/boost_client --host ${host_arg} --port ${port_arg} ${common_args_our_clients} --output-file ${output_prefix}_boost_${transport}_${scenario_name}_safe.bin")
+        commands+=("$client_prefix ./benchmark/boost_client --unsafe --host ${host_arg} --port ${port_arg} ${common_args_our_clients} --output-file ${output_prefix}_boost_${transport}_${scenario_name}_unsafe.bin")
         # Rust
         commands+=("$client_prefix ./httprust_client ${host_arg} ${port_arg} ${common_args_our_clients} --output-file ${output_prefix}_httprust_${transport}_${scenario_name}_safe.bin")
         commands+=("$client_prefix ./httprust_client ${host_arg} ${port_arg} ${common_args_our_clients} --output-file ${output_prefix}_httprust_${transport}_${scenario_name}_unsafe.bin --unsafe")
