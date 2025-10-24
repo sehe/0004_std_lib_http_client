@@ -141,7 +141,7 @@ void do_session(Stream& stream, const ResponseCache& cache, const Config& config
     beast::flat_buffer buffer;
     buffer.reserve(1024 * 1024 + 16);
     beast::error_code ec;
-
+    std::size_t count = 0;
     for (;;) {
         http::request_parser<http::buffer_body> parser;
 
@@ -156,7 +156,7 @@ void do_session(Stream& stream, const ResponseCache& cache, const Config& config
 
         beast::string_view req_body_view {
             static_cast<const char*>(buffer.data().data()),
-            parser.get().body().size
+            parser.content_length().get()
         };
 
         if (config.verify && req_body_view.size() >= 16) {
@@ -171,6 +171,8 @@ void do_session(Stream& stream, const ResponseCache& cache, const Config& config
                 std::cerr << "Warning: Checksum mismatch from client!" << std::endl;
             }
         }
+
+
 
         const auto& header_template = cache.header_templates[0];
         const auto& body_view = cache.body_views[0];
@@ -189,7 +191,6 @@ void do_session(Stream& stream, const ResponseCache& cache, const Config& config
             res.body().append(checksum_str);
             res.body().append(ts_str);
             res.prepare_payload();
-
             http::write(stream, res, ec);
         } else {
             http::response<http::span_body<const char>> res;
@@ -214,6 +215,8 @@ void do_session(Stream& stream, const ResponseCache& cache, const Config& config
         bool const keep_alive = parser.get().keep_alive();
 
         buffer.consume(buffer.size());
+        ++count;
+        if (count == config.num_responses) { break; }
 
         if (!keep_alive) { break; }
     }
@@ -253,6 +256,7 @@ void do_listen(net::io_context& ioc, const Endpoint& endpoint, const ResponseCac
             break;
         }
         do_session(socket, cache, config);
+        break;
     }
 }
 
@@ -277,6 +281,6 @@ int main(int argc, char* argv[]) {
         auto const endpoint = local::endpoint{config.unix_socket_path};
         do_listen<local::acceptor, local::endpoint>(ioc, endpoint, response_cache, config);
     }
-
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     return 0;
 }
