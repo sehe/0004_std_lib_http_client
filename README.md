@@ -3239,3 +3239,536 @@ The following table provides a comparative overview of how key functionalities a
 | **Verifies failure on premature connection close (bad `Content-Length`).** | **Arrange**: `StartServer` sends headers indicating large `Content-Length` but sends short body and closes connection.<br>**Act**: `protocol_.perform_request_unsafe(req)`.<br>**Assert**: `ASSERT_FALSE(result.has_value())`, check error is `HttpClientError::HttpParseFailure`.                    | **Arrange**: `setup_*_server` sends headers with large `Content-Length`, short body, drops stream.<br>**Act**: `protocol.perform_request_unsafe(&request)`.<br>**Assert**: `assert!(result.is_err())`, `assert!(matches!(... Error::Http(HttpClientError::HttpParseFailure)))`.                                                   | **Arrange**: `server_factory` sends headers with large `Content-Length`, short body, closes socket.<br>**Act/Assert**: `with pytest.raises(HttpParseError, match="Connection closed before full content length...")` wraps `protocol.perform_request_unsafe(req)`.                           |
 | **Verifies failure if connection closes during headers.** | *(Implicitly tested by integration tests, explicitly by C mock tests)* | *(Implicitly tested by integration tests, explicitly by C mock tests)* | **Arrange**: `server_factory` sends incomplete headers then closes socket.<br>**Act/Assert**: `with pytest.raises(HttpParseError, match="Could not find header separator...")` wraps `protocol.perform_request_unsafe(req)`.                                                    |
 | **Verifies distinction between safe (copy) & unsafe (view) responses.** | **Arrange**: Perform a request, server sends known body.<br>**Act**: `protocol_.perform_request_safe(req)`.<br>**Assert**: Check response content. `ASSERT_NE(res.body.data(), protocol_.get_internal_buffer_ptr_for_test())` confirms body is a copy.                                           | **Arrange**: Perform a request, server sends known body.<br>**Act**: `protocol.perform_request_safe(&request)`.<br>**Assert**: Check response content (`Vec<u8>`). `assert_ne!(res.body.as_ptr(), protocol.get_internal_buffer_ptr_for_test())` confirms body is a copy.                                                            | **Arrange**: Perform a request, server sends known body.<br>**Act**: `protocol.perform_request_safe(req)`.<br>**Assert**: Check response content (`bytes`). Clear internal `protocol._buffer`. `assert res.body == expected_body` confirms the copy is independent.                             |
+
+
+# **Chapter 8: Code Deep Dive - The Client API Façade**
+
+We have now journeyed through the foundational layers of our HTTP client: establishing reliable byte streams with the **Transport Layer** (Chapter 5) and implementing the rules of conversation with the **Protocol Layer** (Chapters 6 & 7). The final piece of our architecture is the user-facing **Client API Façade**. This layer serves as the primary entry point for anyone using our library, providing a simplified interface that hides the underlying complexities of transport management and protocol interactions.
+
+The design goal follows the **Façade pattern**: create a unified, higher-level interface to a set of interfaces in a subsystem (in our case, the protocol layer). The `HttpClient` struct or class offers straightforward methods like `connect`, `disconnect`, `get`, and `post`, orchestrating the necessary calls to the protocol layer behind the scenes.
+
+Beyond mere simplification, this layer also takes on the crucial responsibility of **request validation**. Before sending a request down to the protocol layer, the `HttpClient` ensures the request conforms to basic HTTP rules relevant to the client (e.g., GET requests shouldn't have bodies, POST requests require a body and a `Content-Length` header). This prevents malformed requests from even reaching the network stack.
+
+Furthermore, especially in the C implementation, this layer manages the **lifecycle** of the underlying protocol and transport objects, handling their creation during initialization and ensuring their proper destruction.
+
+A key architectural benefit, stemming directly from the design established in Chapter 4, is **extensibility**. The `HttpClient` is designed to work with *any* object that adheres to the `HttpProtocol` interface (or concept/trait/protocol). This means that if we were to implement a new protocol handler in the future, such as an `Http2Protocol`, it could be seamlessly integrated and used with the existing `HttpClient` simply by providing it during initialization (or via template instantiation), without needing to modify the client façade's code itself. This demonstrates the power of interface-based design for decoupling components and enabling future evolution.
+
+This chapter will analyze the `HttpClient` façade implementation across our four languages—C, C++, Rust, and Python—examining how each language's features are used to create this user-friendly and robust interface. We will conclude by summarizing the verification strategy used to ensure its correctness.
+
+## **8.1 The C Implementation (`HttpClient` Struct)**
+
+The C client API provides the most fundamental interface, defined in `include/httpc/httpc.h` and implemented in `src/c/httpc.c`. Staying true to C idioms, it uses a struct (`HttpClient`) containing function pointers to simulate an object-oriented style, offering a clear set of operations to the user while managing the underlying protocol and transport components.
+
+### **8.1.1 Structure Definition (`struct HttpClient`)**
+
+The public face of the C client is the `HttpClient` struct:
+
+```c
+// From: include/httpc/httpc.h
+
+struct HttpClient {
+    HttpProtocolInterface* protocol; // Pointer to the protocol implementation
+    // Function pointers acting as public methods
+    Error (*connect)(struct HttpClient* self, const char* host, int port);
+    Error (*disconnect)(struct HttpClient* self);
+    Error (*get)(struct HttpClient* self,
+                 HttpRequest* request,
+                 HttpResponse* response);
+    Error (*post)(struct HttpClient* self,
+                  HttpRequest* request,
+                  HttpResponse* response);
+};
+```
+
+* **`HttpProtocolInterface* protocol`**: This is the crucial link to the underlying protocol layer (e.g., an instance of `Http1Protocol`). The client interacts with the protocol logic solely through this interface pointer, enabling the extensibility discussed earlier.
+* **Function Pointers (`connect`, `disconnect`, `get`, `post`)**: These members hold the addresses of the actual functions that implement the client's behavior. A user interacts with the client like this: `client.connect(&client, host, port)`. This invokes the function pointed to by `client.connect`, passing the client struct itself as the first argument (`self`), simulating a method call.
+
+### **8.1.2 Initialization and Destruction**
+
+Creating and destroying a C `HttpClient` involves managing the lifecycles of the protocol and transport layers.
+
+* **`http_client_init`**: This is the primary way to initialize the client.
+
+  ```c
+  // From: src/c/httpc.c
+  Error http_client_init(struct HttpClient* self, int transport_type, int protocol_type, HttpResponseMemoryPolicy policy, HttpIoPolicy io_policy) {
+      TransportInterface* transport = NULL;
+      // Dynamically create transport based on transport_type
+      if (transport_type == HttpTransportType.TCP) {
+          transport = tcp_transport_new(NULL); // NULL uses default syscalls
+      } else if (transport_type == HttpTransportType.UNIX) {
+          transport = unix_transport_new(NULL);
+      }
+      // Error check transport creation...
+
+      HttpProtocolInterface* protocol = NULL;
+      // Dynamically create protocol based on protocol_type
+      if (protocol_type == HttpProtocolType.HTTP1) {
+          // Pass policies down to the protocol layer
+          protocol = http1_protocol_new(transport, NULL, policy, io_policy);
+      }
+      // Error check protocol creation, cleaning up transport if needed...
+
+      // Wire up the client struct's function pointers
+      return http_client_init_with_protocol(self, protocol);
+  }
+  ```
+
+  This function dynamically allocates the appropriate transport (`tcp_transport_new` or `unix_transport_new`) and protocol (`http1_protocol_new`) based on the provided type enums (`HttpTransportType`, `HttpProtocolType`). It also passes down the memory and I/O policy selections (`policy`, `io_policy`) to the protocol layer where they are used. It includes error checking to ensure resources are cleaned up if any step fails. Finally, it calls the common wiring function.
+
+* **`http_client_init_with_protocol`**: This function handles the final setup step and allows for dependency injection.
+
+  ```c
+  // From: src/c/httpc.c
+  Error http_client_init_with_protocol(struct HttpClient* self, HttpProtocolInterface* protocol) {
+      self->protocol = protocol; // Store the protocol interface
+      // Assign client's function pointers to static implementations
+      self->connect = http_client_connect;
+      self->disconnect = http_client_disconnect;
+      self->get = http_client_get;
+      self->post = http_client_post;
+      return (Error){ErrorType.NONE, 0};
+  }
+  ```
+
+  It stores the provided `protocol` interface pointer and crucially "wires up" the `HttpClient` struct by assigning its function pointer members (`self->connect`, `self->get`, etc.) to point to the addresses of the corresponding static functions (`http_client_connect`, `http_client_get`, etc.) defined within `httpc.c`. This completes the setup, making the client ready for use.
+
+* **`http_client_destroy`**: This function ensures proper cleanup.
+
+  ```c
+  // From: src/c/httpc.c
+  void http_client_destroy(struct HttpClient* self) {
+      if (!self || !self->protocol) {
+          return;
+      }
+      // Get transport pointer from the protocol struct before destroying it
+      TransportInterface* transport = self->protocol->transport;
+
+      // Destroy protocol first, then transport
+      self->protocol->destroy(self->protocol->context);
+      transport->destroy(transport->context);
+  }
+  ```
+
+  It correctly orchestrates the destruction sequence: first destroying the protocol layer (which might depend on the transport) and then destroying the transport layer, freeing all associated resources.
+
+### **8.1.3 Core Methods & Validation**
+
+The actual behavior of the client's `connect`, `disconnect`, `get`, and `post` operations is implemented in static functions within `httpc.c`.
+
+* **Delegation (`http_client_connect`, `http_client_disconnect`)**: These functions are straightforward wrappers that directly delegate the call to the corresponding method on the stored `protocol` interface pointer.
+
+  ```c
+  // From: src/c/httpc.c
+  static Error http_client_connect(struct HttpClient* self, const char* host, int port) {
+      return self->protocol->connect(self->protocol->context, host, port);
+  }
+  static Error http_client_disconnect(struct HttpClient* self) {
+      return self->protocol->disconnect(self->protocol->context);
+  }
+  ```
+
+* **Validation (`http_client_get`, `http_client_post`)**: The `get` and `post` functions add a layer of validation *before* delegating to the protocol layer's `perform_request`.
+
+  ```c
+  // From: src/c/httpc.c
+  static Error http_client_get(struct HttpClient* self, /*...*/) {
+      // 1. Check for null arguments
+      if (self == nullptr || request == nullptr || response == nullptr || request->path == nullptr) {
+          return (Error){ErrorType.HTTPC, HttpClientErrorCode.INVALID_REQUEST_SYNTAX};
+      }
+      // 2. Validate GET specific rules (no body)
+      if (request->body != nullptr) {
+          return (Error){ErrorType.HTTPC, HttpClientErrorCode.INVALID_REQUEST_SYNTAX};
+      }
+      // 3. Set method
+      request->method = HTTP_GET;
+      // 4. Delegate to protocol layer
+      return self->protocol->perform_request(self->protocol->context, request, response);
+  }
+
+  static Error http_client_post(struct HttpClient* self, /*...*/) {
+      // 1. Check for null arguments (including body for POST)
+      if (self == nullptr || request == nullptr || response == nullptr || request->path == nullptr || request->body == nullptr) {
+          return (Error){ErrorType.HTTPC, HttpClientErrorCode.INVALID_REQUEST_SYNTAX};
+      }
+      // 2. Validate POST specific rules (must have Content-Length)
+      int content_length_found = 0;
+      for (size_t i = 0; i < request->num_headers; ++i) {
+          if (request->headers[i].key != nullptr && strcasecmp(request->headers[i].key, "Content-Length") == 0) {
+              content_length_found = 1;
+              break;
+          }
+      }
+      if (!content_length_found) {
+          return (Error){ErrorType.HTTPC, HttpClientErrorCode.INVALID_REQUEST_SYNTAX};
+      }
+      // 3. Set method
+      request->method = HTTP_POST;
+      // 4. Delegate to protocol layer
+      return self->protocol->perform_request(self->protocol->context, request, response);
+  }
+  ```
+
+  These functions first perform essential sanity checks (like ensuring required pointers aren't `nullptr`). Then, they enforce HTTP rules specific to the client's role: `http_client_get` forbids a request body, while `http_client_post` requires a body and iterates through the headers to mandate the presence of a `Content-Length` header. Only if these validations pass is the request method set appropriately, and the call delegated to the protocol layer's generic `perform_request` function.
+
+## **8.2 The C++ Implementation (`HttpClient` Template)**
+
+The C++ client API, defined in `include/httpcpp/httpcpp.hpp`, offers a modern, type-safe, and resource-safe interface. It leverages C++ templates, concepts, RAII, and standard library types like `std::expected` to provide a robust façade over the protocol layer.
+
+### **8.2.1 Class Template Definition (`HttpClient<P>`)**
+
+The C++ client is defined as a class template, generic over the protocol implementation:
+
+```cpp
+// From: <include/httpcpp/httpcpp.hpp>
+
+namespace httpcpp {
+
+    template<HttpProtocol P> // Constrained by the HttpProtocol concept
+    class HttpClient {
+    public:
+        HttpClient() = default; // Default constructor
+        ~HttpClient() = default; // Default destructor relying on RAII of members
+
+        // Prevent copying and moving
+        HttpClient(const HttpClient&) = delete;
+        HttpClient& operator=(const HttpClient&) = delete;
+        HttpClient(HttpClient&&) = delete;
+        HttpClient& operator=(HttpClient&&) = delete;
+
+        // ... methods ...
+
+    private:
+        P protocol_; // Composed protocol object
+    };
+} // namespace httpcpp
+```
+
+* **`template<HttpProtocol P>`**: The `HttpClient` is templated on a type `P`. Crucially, `P` is constrained by the `HttpProtocol` concept we defined earlier. This ensures at compile time that any type used to instantiate `HttpClient` (like `Http1Protocol<TcpTransport>`) correctly implements the required protocol interface (`connect`, `disconnect`, `perform_request_safe`, `perform_request_unsafe`). This provides strong type safety and allows the compiler to potentially inline calls to the protocol layer for better performance (zero-cost abstraction).
+* **`P protocol_`**: Unlike the C version's pointer, the C++ client directly owns the protocol object (`protocol_`) through composition. As discussed for the protocol layer itself, this promotes better data locality.
+* **RAII & Lifecycle**: The defaulted constructor and destructor signify that the `HttpClient` itself doesn't need custom logic for resource management. It relies entirely on the RAII principle: when an `HttpClient` object is destroyed, its `protocol_` member is automatically destroyed, which in turn (as seen in `Http1Protocol`'s destructor) ensures resources like the underlying transport connection are properly released. The deleted copy and move constructors/assignment operators prevent accidental or unintended duplication of the client and its managed resources.
+
+### **8.2.2 Core Methods & Validation**
+
+The public methods of the C++ `HttpClient` provide a clean interface, handle basic request validation, and delegate to the composed protocol object.
+
+```cpp
+// From: <include/httpcpp/httpcpp.hpp>
+
+template<HttpProtocol P>
+class HttpClient {
+public:
+    // ... constructor, destructor, deleted ops ...
+
+    [[nodiscard]] auto connect(const char* host, uint16_t port) noexcept -> std::expected<void, Error> {
+        return protocol_.connect(host, port); // Direct delegation
+    }
+
+    [[nodiscard]] auto disconnect() noexcept -> std::expected<void, Error> {
+        return protocol_.disconnect(); // Direct delegation
+    }
+
+    [[nodiscard]] auto get_safe(HttpRequest& request) noexcept -> std::expected<SafeHttpResponse, Error> {
+        // 1. GET Validation
+        if (!request.body.empty()) {
+            return std::unexpected(HttpClientError::InvalidRequest);
+        }
+        // 2. Set method
+        request.method = HttpMethod::Get;
+        // 3. Delegate to protocol
+        return protocol_.perform_request_safe(request);
+    }
+
+    [[nodiscard]] auto get_unsafe(HttpRequest& request) noexcept -> std::expected<UnsafeHttpResponse, Error> {
+        if (!request.body.empty()) { /* ... validation ... */ }
+        request.method = HttpMethod::Get;
+        return protocol_.perform_request_unsafe(request);
+    }
+
+    [[nodiscard]] auto post_safe(HttpRequest& request) noexcept -> std::expected<SafeHttpResponse, Error> {
+        // 1. POST Validation (using helper)
+        if (auto validation_result = validate_post_request(request); !validation_result) {
+            return std::unexpected(validation_result.error());
+        }
+        // 2. Set method
+        request.method = HttpMethod::Post;
+        // 3. Delegate to protocol
+        return protocol_.perform_request_safe(request);
+    }
+
+    [[nodiscard]] auto post_unsafe(HttpRequest& request) noexcept -> std::expected<UnsafeHttpResponse, Error> {
+        if (auto validation_result = validate_post_request(request); !validation_result) { /* ... validation ... */ }
+        request.method = HttpMethod::Post;
+        return protocol_.perform_request_unsafe(request);
+    }
+
+private:
+    P protocol_;
+
+    // Private helper for POST validation
+    [[nodiscard]] auto validate_post_request(const HttpRequest& request) noexcept -> std::expected<void, Error> {
+        // Check for empty body
+        if (request.body.empty()) {
+            return std::unexpected(HttpClientError::InvalidRequest);
+        }
+        // Check for Content-Length header (case-insensitive)
+        bool content_length_found = false;
+        std::string_view cl_key = "Content-Length";
+        for (const auto& [key, value] : request.headers) {
+            if (key.size() == cl_key.size() &&
+                std::equal(key.begin(), key.end(), cl_key.begin(),
+                           [](char a, char b) { return std::tolower(a) == std::tolower(b); })) {
+                content_length_found = true;
+                break;
+            }
+        }
+        if (!content_length_found) {
+            return std::unexpected(HttpClientError::InvalidRequest);
+        }
+        return {}; // Success
+    }
+};
+```
+
+* **Direct Delegation**: The `connect` and `disconnect` methods simply forward the call to the `protocol_` object.
+* **Return Types**: All methods are marked `[[nodiscard]]` to encourage callers to check the return value. They return `std::expected<..., Error>`, clearly indicating that the operation might succeed (returning the expected value, like `void` or a response object) or fail (returning an `Error` variant), directly propagating the result from the protocol layer.
+* **GET Validation**: The `get_safe` and `get_unsafe` methods perform a simple check to ensure the request body is empty before setting the method to `HttpMethod::Get` and delegating.
+* **POST Validation**: The `post_safe` and `post_unsafe` methods delegate validation to the private `validate_post_request` helper. This helper checks that the body is non-empty and that a "Content-Length" header exists (using `std::equal` with a case-insensitive comparison lambda). If validation passes, the method is set to `HttpMethod::Post`, and the call is forwarded to the protocol layer. This keeps the public methods clean and centralizes the validation logic.
+
+## **8.3 The Rust Implementation (`HttpClient` Generic Struct)**
+
+The Rust client API, found in `src/rust/src/httprust.rs`, offers an interface focused on safety, ergonomics, and compile-time guarantees, characteristic of the Rust language. It utilizes generics constrained by traits, the ownership system for resource management, and the `Result` type for explicit error handling, providing a robust façade over the protocol layer.
+
+### **8.3.1 Generic Struct Definition (`HttpClient<P>`)**
+
+Similar to the C++ version, the Rust `HttpClient` is a generic struct, ensuring flexibility while maintaining type safety through trait bounds.
+
+```rust
+// From: src/rust/src/httprust.rs
+
+// P must implement the HttpProtocol trait
+pub struct HttpClient<P: HttpProtocol>
+{
+    protocol: P, // Owns the protocol object via composition
+}
+
+// Constructor requires the protocol type to implement Default
+impl<P: HttpProtocol + Default> HttpClient<P>
+{
+    pub fn new() -> Self {
+        Self {
+            protocol: P::default(), // Default construct the protocol
+        }
+    }
+}
+
+// Methods available for any HttpClient<P> where P implements HttpProtocol
+impl<P: HttpProtocol> HttpClient<P>
+{
+    // ... methods ...
+}
+```
+
+* **`pub struct HttpClient<P: HttpProtocol>`**: The `HttpClient` is generic over a type `P`. The `P: HttpProtocol` syntax is a **trait bound**, ensuring that any type `P` used to instantiate `HttpClient` must implement the `HttpProtocol` trait defined earlier. This check happens at compile time, guaranteeing that `P` has the necessary methods (`connect`, `perform_request_safe`, etc.) required by the `HttpClient`.
+* **`protocol: P`**: The `protocol` object is owned directly by the `HttpClient` struct via composition. This follows the pattern seen in C++, promoting data locality.
+* **Construction & Lifecycle**: The `new()` associated function provides a convenient constructor, but it requires that the protocol type `P` also implements the `Default` trait. Resource management is handled automatically by Rust's **ownership** system. When an `HttpClient` instance goes out of scope, its owned `protocol` field is dropped. If the protocol type (or the transport it contains) implements the `Drop` trait, its cleanup logic (like closing the socket) is executed automatically and safely.
+
+### **8.3.2 Core Methods & Validation**
+
+The methods provide the public API, performing validation and delegating to the owned `protocol` instance. Rust's `Result` enum and the `?` operator are central to error handling.
+
+```rust
+// From: src/rust/src/httprust.rs
+
+impl<P: HttpProtocol> HttpClient<P>
+{
+    // Connects using the underlying protocol
+    pub fn connect(&mut self, host: &str, port: u16) -> Result<()> {
+        self.protocol.connect(host, port) // Direct delegation
+    }
+
+    // Disconnects using the underlying protocol
+    pub fn disconnect(&mut self) -> Result<()> {
+        self.protocol.disconnect() // Direct delegation
+    }
+
+    // Performs a GET request (safe, owning response)
+    pub fn get_safe(&mut self, request: &mut HttpRequest) -> Result<SafeHttpResponse> {
+        // 1. GET Validation
+        if !request.body.is_empty() {
+            return Err(Error::Http(HttpClientError::InvalidRequest));
+        }
+        // 2. Set method
+        request.method = HttpMethod::Get;
+        // 3. Delegate to protocol
+        self.protocol.perform_request_safe(request)
+    }
+
+    // Performs a GET request (unsafe, borrowing response)
+    pub fn get_unsafe<'a>(
+        &'a mut self,
+        request: &'a mut HttpRequest,
+    ) -> Result<UnsafeHttpResponse<'a>> {
+        if !request.body.is_empty() { /* ... validation ... */ }
+        request.method = HttpMethod::Get;
+        self.protocol.perform_request_unsafe(request)
+    }
+
+    // Performs a POST request (safe, owning response)
+    pub fn post_safe(&mut self, request: &mut HttpRequest) -> Result<SafeHttpResponse> {
+        // 1. POST Validation (using helper + ?)
+        self.validate_post_request(request)?;
+        // 2. Set method
+        request.method = HttpMethod::Post;
+        // 3. Delegate to protocol
+        self.protocol.perform_request_safe(request)
+    }
+
+    // Performs a POST request (unsafe, borrowing response)
+    pub fn post_unsafe<'a>(
+        &'a mut self,
+        request: &'a mut HttpRequest,
+    ) -> Result<UnsafeHttpResponse<'a>> {
+        self.validate_post_request(request)?; // Validation helper + ?
+        request.method = HttpMethod::Post;
+        self.protocol.perform_request_unsafe(request)
+    }
+
+    // Private helper for POST validation
+    fn validate_post_request(&self, request: &HttpRequest) -> Result<()> {
+        // Check for empty body
+        if request.body.is_empty() {
+            return Err(Error::Http(HttpClientError::InvalidRequest));
+        }
+        // Check for Content-Length header (case-insensitive)
+        let content_length_found = request
+            .headers
+            .iter()
+            .any(|h| h.key.eq_ignore_ascii_case("Content-Length"));
+        if !content_length_found {
+            return Err(Error::Http(HttpClientError::InvalidRequest));
+        }
+        Ok(()) // Success
+    }
+}
+```
+
+* **Direct Delegation**: `connect` and `disconnect` simply forward the calls to the `protocol` object.
+* **Error Handling (`Result<...>` and `?`)**: All public methods return Rust's standard `Result` type, making potential failures explicit. The `post_safe` and `post_unsafe` methods demonstrate the use of the **`?` operator** after calling `validate_post_request`. If `validate_post_request` returns an `Err`, the `?` operator immediately propagates that `Err` value out of the calling function (`post_safe`/`post_unsafe`). This provides concise and safe error propagation.
+* **GET Validation**: `get_safe` and `get_unsafe` check if `request.body` is non-empty and return an `Err` if it is, enforcing the rule for GET requests.
+* **POST Validation**: The private `validate_post_request` helper checks for a non-empty body and the presence of a "Content-Length" header (using iterators and the `eq_ignore_ascii_case` method for case-insensitivity). It returns a `Result<()>`, allowing the `?` operator to handle error propagation cleanly in the calling `post_*` methods.
+* **Method Assignment**: The `get_*` and `post_*` methods ensure the `request.method` field is correctly set before delegating the request execution to the protocol layer.
+
+## **8.4 The Python Implementation (`HttpClient` Class)**
+
+The Python client API, implemented in `src/python/httppy/httppy.py`, provides the most dynamic and arguably highest-level interface among the four languages. It leverages Python's standard features, duck typing (formalized via `typing.Protocol`), and exception handling to create a user-friendly façade over the protocol layer.
+
+### **8.4.1 Class Definition (`HttpClient`)**
+
+The Python client is a standard class that takes the protocol implementation as a dependency during initialization.
+
+```python
+# From: src/python/httppy/httppy.py
+
+from .errors import InvalidRequestError
+from .http_protocol import HttpProtocol, HttpRequest, HttpMethod # ...
+
+class HttpClient:
+    def __init__(self, protocol: HttpProtocol):
+        # Store the protocol object (composition)
+        self._protocol = protocol
+    # ... methods ...
+```
+
+* **`__init__(self, protocol: HttpProtocol)`**: The constructor accepts an object `protocol` and stores it as `self._protocol`. The `protocol: HttpProtocol` type hint indicates that the passed object is expected to conform to the `HttpProtocol` interface defined using `typing.Protocol`.
+* **Dynamic Typing & Protocols**: Python uses duck typing. At runtime, the `HttpClient` will work as long as the `_protocol` object has the necessary methods (`connect`, `perform_request_safe`, etc.). The `HttpProtocol` type hint primarily serves static analysis tools (like Mypy) and improves code clarity by documenting the expected interface contract.
+
+### **8.4.2 Core Methods & Validation**
+
+The public methods mirror those in the other languages, providing the façade interface, handling validation, and delegating to the protocol object. Error handling relies on Python's standard exception mechanism.
+
+```python
+# From: src/python/httppy/httppy.py
+
+class HttpClient:
+    # ... __init__ ...
+
+    def connect(self, host: str, port: int) -> None:
+        self._protocol.connect(host, port) # Direct delegation
+
+    def disconnect(self) -> None:
+        self._protocol.disconnect() # Direct delegation
+
+    def get_safe(self, request: HttpRequest) -> SafeHttpResponse:
+        self._validate_get_request(request) # Validation helper
+        request.method = HttpMethod.GET      # Set method
+        return self._protocol.perform_request_safe(request) # Delegate
+
+    def get_unsafe(self, request: HttpRequest) -> UnsafeHttpResponse:
+        self._validate_get_request(request) # Validation helper
+        request.method = HttpMethod.GET      # Set method
+        return self._protocol.perform_request_unsafe(request) # Delegate
+
+    def post_safe(self, request: HttpRequest) -> SafeHttpResponse:
+        self._validate_post_request(request) # Validation helper
+        request.method = HttpMethod.POST     # Set method
+        return self._protocol.perform_request_safe(request) # Delegate
+
+    def post_unsafe(self, request: HttpRequest) -> UnsafeHttpResponse:
+        self._validate_post_request(request) # Validation helper
+        request.method = HttpMethod.POST     # Set method
+        return self._protocol.perform_request_unsafe(request) # Delegate
+
+    # --- Validation Helpers ---
+    def _validate_get_request(self, request: HttpRequest) -> None:
+        if request.body: # Check truthiness of body
+            raise InvalidRequestError("GET requests cannot have a body.")
+
+    def _validate_post_request(self, request: HttpRequest) -> None:
+        if not request.body: # Check truthiness of body
+            raise InvalidRequestError("POST requests must have a body.")
+        # Check for Content-Length header (case-insensitive)
+        content_length_found = any(
+            key.lower() == "content-length" for key, _ in request.headers
+        )
+        if not content_length_found:
+            raise InvalidRequestError("POST requests must include a Content-Length header.")
+
+```
+
+* **Direct Delegation**: `connect` and `disconnect` simply forward the calls to `self._protocol`.
+* **Error Handling**: Validation failures are signaled by raising custom exceptions (e.g., `InvalidRequestError`). Errors originating from the protocol or transport layers will also propagate up as exceptions. Users of the `HttpClient` would typically use `try...except` blocks to handle potential failures.
+* **GET Validation**: The `_validate_get_request` helper uses a simple truthiness check (`if request.body:`) to ensure the request body is empty.
+* **POST Validation**: The `_validate_post_request` helper similarly checks for a non-empty body (`if not request.body:`). It then uses a generator expression within `any()` to efficiently check for the presence of a "Content-Length" header, comparing keys case-insensitively using `.lower()`.
+* **Method Assignment**: The `get_*` and `post_*` methods set the appropriate `request.method` before passing the request to the protocol layer.
+
+## **8.5 Verification Strategy**
+
+The `HttpClient` façade, acting primarily as an orchestrator and validator, is best verified through **integration tests**. These tests ensure that the client correctly uses the underlying protocol layer, enforces its request validation rules, and handles the overall request/response lifecycle as expected across different transport mechanisms. Unlike the C protocol layer where mock transports were essential, the client layer tests focus on end-to-end behavior.
+
+The respective test suites are located in:
+
+* **C**: `tests/c/test_httpc.cpp`
+* **C++**: `tests/cpp/test_httpcpp.cpp`
+* **Rust**: `src/rust/src/httprust.rs` (within the `#[cfg(test)] mod tests { ... }` block)
+* **Python**: `src/python/tests/test_httppy.py`
+
+Across these suites, the key scenarios verified include:
+
+* **Connection Lifecycle**: Successful `connect` and `disconnect` operations are delegated correctly.
+* **Basic GET/POST**: Successful `get` (safe/unsafe) and `post` (safe/unsafe) requests are properly formatted, sent via the protocol layer, and the responses are correctly returned.
+* **Request Validation Failures**:
+  * Attempting a `get` request with a non-empty body correctly results in an error (`INVALID_REQUEST_SYNTAX` or equivalent exception).
+  * Attempting a `post` request with an empty body correctly results in an error.
+  * Attempting a `post` request without a `Content-Length` header correctly results in an error.
+* **Error Propagation**: Errors originating from the protocol or transport layers (e.g., connection failures, parsing errors) are accurately propagated back through the client API.
+* **Multi-Request Validation**: More complex tests (often involving checksum verification, like `MultiRequestChecksumVerification` or `RunMultiRequestLoop`) exercise the client over numerous sequential requests on the same connection, verifying behavior for both safe and unsafe response modes and different I/O policies (like C's `writev`).
+
+These tests utilize the same techniques seen in the protocol layer verification for C++, Rust, and Python:
+
+* **Background Servers**: Test fixtures (GoogleTest, Pytest) or helper functions (Rust) start live TCP or Unix servers in background threads.
+* **Synchronization**: Primitives like C++ `std::promise`/`std::future`, Rust `mpsc::channel`, and Python `queue.Queue` are used to coordinate between the test thread and the server thread.
+* **Parameterization**: Techniques like C++ Typed Tests, Rust macros, and Pytest's `@pytest.mark.parametrize` are used to run the same test logic against both TCP and Unix transports efficiently.
+
+Even the C client tests (`test_httpc.cpp`), despite being written in C++, adopt this integration testing approach, using a background server to validate the C `HttpClient` struct's orchestration and validation logic in an end-to-end fashion. This consistent strategy across the higher-level languages provides strong confidence in the client façade's correctness.
