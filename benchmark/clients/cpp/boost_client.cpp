@@ -31,6 +31,7 @@ struct Config {
     std::string data_file = "benchmark_data.bin";
     std::string output_file = "latencies_boost.bin";
     bool verify = true;
+    bool unsafe_res = false;
 };
 
 struct BenchmarkData {
@@ -51,6 +52,7 @@ bool parse_args(int argc, char* argv[], Config& config) {
             ("data-file", po::value<std::string>(&config.data_file)->default_value("benchmark_data.bin"), "Path to the pre-generated data file.")
             ("output-file", po::value<std::string>(&config.output_file)->default_value("latencies_boost.bin"), "File to save raw latency data to.")
             ("no-verify", po::bool_switch()->default_value(false), "Disable checksum validation.")
+            ("unsafe", po::bool_switch()->default_value(false), "Use non-owning span_body for requests (zero-copy send).")
         ;
 
         po::variables_map vm;
@@ -63,6 +65,7 @@ bool parse_args(int argc, char* argv[], Config& config) {
 
         po::notify(vm);
         config.verify = !vm["no-verify"].as<bool>();
+        config.unsafe_res = vm["unsafe"].as<bool>();
 
     } catch (const po::error& e) {
         std::cerr << "Error parsing arguments: " << e.what() << std::endl;
@@ -107,41 +110,47 @@ uint64_t get_nanoseconds() {
 }
 
 template<class Stream>
-void run_benchmark(Stream& stream, const Config& config, const BenchmarkData& data) {
-    std::vector<int64_t> latencies(config.num_requests);
+void run_benchmark(Stream& stream, const Config& config, const BenchmarkData& data, std::vector<int64_t>& latencies) {
     std::string payload_buffer;
     beast::error_code ec;
-
-    // A single, reusable buffer for all socket reads
     beast::flat_buffer buffer;
 
     for (uint64_t i = 0; i < config.num_requests; ++i) {
         size_t req_size = data.sizes[i % data.sizes.size()];
         std::string_view body_slice(data.data_block.data(), req_size);
 
-        // Zero copy write in the no verify case
-        http::request<http::span_body<const char>> req{http::verb::post, "/", 11};
-        req.set(http::field::host, config.host);
-        req.keep_alive(true); // Ensure connection is reused
-
         if (config.verify) {
+            http::request<http::string_body> req{http::verb::post, "/", 11};
+            req.set(http::field::host, config.host);
+            req.keep_alive(true);
             uint64_t checksum = xor_checksum(body_slice);
             std::stringstream ss;
             ss << std::hex << std::setw(16) << std::setfill('0') << checksum;
             payload_buffer.assign(body_slice);
             payload_buffer.append(ss.str());
-            req.body() = {payload_buffer.data(), payload_buffer.size()};
-        } else {
+            req.body() = payload_buffer;
+            req.prepare_payload();
+            http::write(stream, req, ec);
+        } else if (config.unsafe_res) {
+            http::request<http::span_body<const char>> req{http::verb::post, "/", 11};
+            req.set(http::field::host, config.host);
+            req.keep_alive(true);
             req.body() = {body_slice.data(), body_slice.size()};
+            req.prepare_payload();
+            http::write(stream, req, ec);
+        } else {
+            http::request<http::string_body> req{http::verb::post, "/", 11};
+            req.set(http::field::host, config.host);
+            req.keep_alive(true);
+            req.body().assign(body_slice.data(), body_slice.size());
+            req.prepare_payload();
+            http::write(stream, req, ec);
         }
-        req.prepare_payload();
-        http::write(stream, req, ec);
+
         if(ec) { std::cerr << "Write failed: " << ec.message() << std::endl; break; }
 
-        // Preallocated buffer method for reading a response vs http::read
         http::response_parser<http::empty_body> parser;
         parser.skip(true);
-
         http::read_header(stream, buffer, parser, ec);
         if(ec) { std::cerr << "Read header failed: " << ec.message() << std::endl; break; }
 
@@ -153,11 +162,10 @@ void run_benchmark(Stream& stream, const Config& config, const BenchmarkData& da
                 size_t bytes_read = stream.read_some(buffer.prepare(bytes_to_read), ec);
                 buffer.commit(bytes_read);
                 if(ec == http::error::end_of_stream) break;
-                if(ec) { std::cerr << "Read body failed: " << ec.message() << std::endl; goto end_loop; }
+                if(ec) { std::cerr << "Read body failed: " << ec.message() << std::endl; return; }
             }
         }
         auto client_receive_time = get_nanoseconds();
-
         std::string_view body(static_cast<const char*>(buffer.data().data()), buffer.size());
 
         if (config.verify) {
@@ -183,12 +191,6 @@ void run_benchmark(Stream& stream, const Config& config, const BenchmarkData& da
 
         buffer.consume(buffer.size());
     }
-end_loop:;
-
-    std::ofstream out_file(config.output_file, std::ios::binary);
-    if (out_file) {
-        out_file.write(reinterpret_cast<const char*>(latencies.data()), latencies.size() * sizeof(int64_t));
-    }
 }
 
 int main(int argc, char* argv[]) {
@@ -205,18 +207,25 @@ int main(int argc, char* argv[]) {
     asio::io_context ioc;
     beast::error_code ec;
 
+    std::vector<int64_t> latencies(config.num_requests);
+
     if (config.transport_type == "tcp") {
         tcp::resolver resolver(ioc);
         tcp::socket socket(ioc);
         auto const results = resolver.resolve(config.host, std::to_string(config.port));
         asio::connect(socket, results.begin(), results.end());
-        run_benchmark(socket, config, data);
+        run_benchmark(socket, config, data, latencies);
         socket.shutdown(tcp::socket::shutdown_both, ec);
     } else if (config.transport_type == "unix") {
         local::socket socket(ioc);
         socket.connect(config.host); // For Unix, host is the path
-        run_benchmark(socket, config, data);
+        run_benchmark(socket, config, data, latencies);
         socket.shutdown(local::socket::shutdown_both, ec);
+    }
+
+    std::ofstream out_file(config.output_file, std::ios::binary);
+    if (out_file) {
+        out_file.write(reinterpret_cast<const char*>(latencies.data()), latencies.size() * sizeof(int64_t));
     }
 
     std::cout << "boost_client: completed " << config.num_requests << " requests." << std::endl;
