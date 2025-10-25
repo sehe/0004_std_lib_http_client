@@ -148,6 +148,16 @@ void do_session(Stream& stream, const ResponseCache& cache, const Config& config
     // Temporary storage for potentially fragmented body
     std::vector<char> full_body_storage;
 
+
+    if constexpr (std::is_same_v<typename Stream::protocol_type, tcp>) { // Check if it's TCP
+        stream.set_option(tcp::no_delay(true), ec); // Set the option
+        if(ec) {
+            // Log a warning if setting fails, but continue the session
+            std::cerr << "Warning: Failed to set TCP_NODELAY on accepted socket: " << ec.message() << std::endl;
+            ec.clear(); // Clear the error code to allow the session to proceed
+        }
+    }
+
     for (;;) { // Loop for multiple requests
         // *** 1. Parser for HEADERS ONLY ***
         http::request_parser<http::empty_body> header_parser;

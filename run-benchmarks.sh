@@ -8,7 +8,9 @@ set -e
 # ==============================================================================
 
 # --- Configuration ---
-NUM_REQUESTS=100000
+NUM_REQUESTS_THROUGHPUT=50000
+NUM_REQUESTS_LATENCY=100000
+NUM_REQUESTS_MIXED=75000
 WARMUP_RUNS=1
 BENCHMARK_RUNS=30
 
@@ -46,7 +48,7 @@ function restore_default_governor {
 }
 
 function generate_data {
-    local min_len=$1; local max_len=$2
+    local min_len=$1; local max_len=$2; local NUM_REQUESTS=$3
     header "Generating Client Data (Sizes: ${min_len}B - ${max_len}B)"
     ./benchmark/data_generator --num-requests $NUM_REQUESTS --min-length $min_len --max-length $max_len --output $DATA_FILE
 }
@@ -55,8 +57,9 @@ function run_benchmark_scenario {
     local scenario_name=$1
     local client_min_len=$2; local client_max_len=$3
     local server_min_len=$4; local server_max_len=$5
+    local NUM_REQUESTS=$6
 
-    generate_data "$client_min_len" "$client_max_len"
+    generate_data "$client_min_len" "$client_max_len" "$NUM_REQUESTS"
 
     # TODO: --cap-add=SYS_NICE
     # chrt -f ${REALTIME_PRIORITY}
@@ -72,7 +75,7 @@ function run_benchmark_scenario {
             local server_cmd="$server_prefix ./benchmark/benchmark_server --transport unix --unix-socket-path $UNIX_SOCKET --verify false --num-responses $NUM_REQUESTS --min-length $server_min_len --max-length $server_max_len"
         fi
 
-        header "Running Scenario: '$scenario_name' (Transport: $transport)"
+        header "Running Scenario: '$scenario_name' (Transport: $transport) NUM_REQUESTS=$NUM_REQUESTS"
 
         local setup_cmd="$server_cmd & echo \$! > server.pid; sleep 2"
         local cleanup_cmd="kill \$(cat server.pid) 2>/dev/null || true; rm -f server.pid; sleep 1"
@@ -118,6 +121,8 @@ function run_benchmark_scenario {
 # Copy the functions and run them outside your container
 #trap restore_default_governor EXIT
 #set_performance_governor
+#sudo sysctl -w net.core.wmem_max=16777216
+#sudo sysctl -w net.core.rmem_max=16777216
 
 cd "$BUILD_DIR"
 mkdir -p "$LATENCY_DIR"
@@ -126,17 +131,17 @@ cmake --build . &> /dev/null
 rm -rf ../src/python/build
 
 # Throughput Scenarios
-run_benchmark_scenario "throughput_balanced_large" $LARGE_MIN $LARGE_MAX $LARGE_MIN $LARGE_MAX
-run_benchmark_scenario "throughput_uplink_heavy"   $LARGE_MIN $LARGE_MAX $SMALL_MIN $SMALL_MAX
-run_benchmark_scenario "throughput_downlink_heavy" $SMALL_MIN $SMALL_MAX $LARGE_MIN $LARGE_MAX
+run_benchmark_scenario "throughput_balanced_large" $LARGE_MIN $LARGE_MAX $LARGE_MIN $LARGE_MAX $NUM_REQUESTS_THROUGHPUT
+run_benchmark_scenario "throughput_uplink_heavy"   $LARGE_MIN $LARGE_MAX $SMALL_MIN $SMALL_MAX $NUM_REQUESTS_THROUGHPUT
+run_benchmark_scenario "throughput_downlink_heavy" $SMALL_MIN $SMALL_MAX $LARGE_MIN $LARGE_MAX $NUM_REQUESTS_THROUGHPUT
 
 # Latency Scenario
-run_benchmark_scenario "latency_small_small"       $SMALL_MIN $SMALL_MAX $SMALL_MIN $SMALL_MAX
+run_benchmark_scenario "latency_small_small"       $SMALL_MIN $SMALL_MAX $SMALL_MIN $SMALL_MAX $NUM_REQUESTS_LATENCY
 
 # Mixed Scenarios
-run_benchmark_scenario "mixed_server_random"       $SMALL_MIN $SMALL_MAX $MIXED_MIN $MIXED_MAX
-run_benchmark_scenario "mixed_balanced_random"     $MIXED_MIN $MIXED_MAX $MIXED_MIN $MIXED_MAX
-run_benchmark_scenario "mixed_client_random"       $MIXED_MIN $MIXED_MAX $SMALL_MIN $SMALL_MAX
+run_benchmark_scenario "mixed_server_random"       $SMALL_MIN $SMALL_MAX $MIXED_MIN $MIXED_MAX $NUM_REQUESTS_MIXED
+run_benchmark_scenario "mixed_balanced_random"     $MIXED_MIN $MIXED_MAX $MIXED_MIN $MIXED_MAX $NUM_REQUESTS_MIXED
+run_benchmark_scenario "mixed_client_random"       $MIXED_MIN $MIXED_MAX $SMALL_MIN $SMALL_MAX $NUM_REQUESTS_MIXED
 
 header "All benchmarks complete!"
 echo "Latency files are in '${BUILD_DIR}/${LATENCY_DIR}'"
