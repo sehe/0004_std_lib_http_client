@@ -1,0 +1,2142 @@
+
+--- Analysis for: latencies_boost_tcp_latency_small_small_safe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+------------------------------------------------------------------
+Min:    4.6 µs
+P25 (Q1): 5.0 µs
+P50 (Median): 5.2 µs
+P75 (Q3): 6.1 µs
+P90:    6.7 µs
+P99:    7.1 µs
+P99.9:  10.1 µs
+Max:    324.4 µs
+------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_latency_small_small_unsafe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+--------------------------------------------------------------------
+Min:    4.6 µs
+P25 (Q1): 5.0 µs
+P50 (Median): 5.1 µs
+P75 (Q3): 6.1 µs
+P90:    6.8 µs
+P99:    7.4 µs
+P99.9:  10.3 µs
+Max:    333.7 µs
+--------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_mixed_balanced_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+--------------------------------------------------------------------
+Min:    12.7 µs
+P25 (Q1): 14.7 µs
+P50 (Median): 15.1 µs
+P75 (Q3): 15.6 µs
+P90:    16.2 µs
+P99:    17.9 µs
+P99.9:  20.5 µs
+Max:    344.3 µs
+--------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_mixed_balanced_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    12.6 µs
+P25 (Q1): 14.7 µs
+P50 (Median): 15.2 µs
+P75 (Q3): 15.6 µs
+P90:    16.1 µs
+P99:    18.3 µs
+P99.9:  28.1 µs
+Max:    351.7 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_mixed_client_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+------------------------------------------------------------------
+Min:    3.7 µs
+P25 (Q1): 5.5 µs
+P50 (Median): 5.7 µs
+P75 (Q3): 6.0 µs
+P90:    6.2 µs
+P99:    7.2 µs
+P99.9:  15.7 µs
+Max:    1.652 ms
+------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_mixed_client_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+--------------------------------------------------------------------
+Min:    4.4 µs
+P25 (Q1): 4.8 µs
+P50 (Median): 4.9 µs
+P75 (Q3): 5.1 µs
+P90:    5.3 µs
+P99:    6.8 µs
+P99.9:  9.6 µs
+Max:    55.1 µs
+--------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_mixed_server_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+------------------------------------------------------------------
+Min:    14.0 µs
+P25 (Q1): 15.5 µs
+P50 (Median): 16.1 µs
+P75 (Q3): 16.6 µs
+P90:    16.9 µs
+P99:    18.7 µs
+P99.9:  21.0 µs
+Max:    316.3 µs
+------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_mixed_server_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+--------------------------------------------------------------------
+Min:    14.1 µs
+P25 (Q1): 15.6 µs
+P50 (Median): 16.2 µs
+P75 (Q3): 16.7 µs
+P90:    17.0 µs
+P99:    18.3 µs
+P99.9:  21.0 µs
+Max:    373.6 µs
+--------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_throughput_balanced_large_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+------------------------------------------------------------------------
+Min:    43.8 µs
+P25 (Q1): 49.2 µs
+P50 (Median): 50.1 µs
+P75 (Q3): 51.0 µs
+P90:    51.8 µs
+P99:    54.3 µs
+P99.9:  59.2 µs
+Max:    666.3 µs
+------------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_throughput_balanced_large_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+--------------------------------------------------------------------------
+Min:    45.6 µs
+P25 (Q1): 48.8 µs
+P50 (Median): 50.0 µs
+P75 (Q3): 51.1 µs
+P90:    51.9 µs
+P99:    53.6 µs
+P99.9:  55.9 µs
+Max:    337.1 µs
+--------------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_throughput_downlink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+------------------------------------------------------------------------
+Min:    48.1 µs
+P25 (Q1): 52.2 µs
+P50 (Median): 52.9 µs
+P75 (Q3): 53.6 µs
+P90:    54.2 µs
+P99:    56.8 µs
+P99.9:  59.9 µs
+Max:    386.8 µs
+------------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_throughput_downlink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+--------------------------------------------------------------------------
+Min:    53.8 µs
+P25 (Q1): 56.6 µs
+P50 (Median): 57.5 µs
+P75 (Q3): 58.5 µs
+P90:    59.5 µs
+P99:    61.8 µs
+P99.9:  65.2 µs
+Max:    393.0 µs
+--------------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_throughput_uplink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    3.9 µs
+P25 (Q1): 4.7 µs
+P50 (Median): 5.7 µs
+P75 (Q3): 6.0 µs
+P90:    6.2 µs
+P99:    7.7 µs
+P99.9:  10.6 µs
+Max:    334.8 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_tcp_throughput_uplink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+------------------------------------------------------------------------
+Min:    3.9 µs
+P25 (Q1): 4.4 µs
+P50 (Median): 4.5 µs
+P75 (Q3): 4.6 µs
+P90:    4.8 µs
+P99:    6.3 µs
+P99.9:  7.2 µs
+Max:    131.1 µs
+------------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_latency_small_small_safe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+-------------------------------------------------------------------
+Min:    3.9 µs
+P25 (Q1): 4.4 µs
+P50 (Median): 4.5 µs
+P75 (Q3): 4.6 µs
+P90:    4.7 µs
+P99:    7.7 µs
+P99.9:  10.0 µs
+Max:    334.0 µs
+-------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_latency_small_small_unsafe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    3.8 µs
+P25 (Q1): 4.4 µs
+P50 (Median): 4.5 µs
+P75 (Q3): 4.6 µs
+P90:    4.7 µs
+P99:    7.7 µs
+P99.9:  10.9 µs
+Max:    316.6 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_mixed_balanced_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    10.9 µs
+P25 (Q1): 13.5 µs
+P50 (Median): 14.4 µs
+P75 (Q3): 15.7 µs
+P90:    16.8 µs
+P99:    19.5 µs
+P99.9:  38.9 µs
+Max:    796.6 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_mixed_balanced_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    11.1 µs
+P25 (Q1): 13.5 µs
+P50 (Median): 14.3 µs
+P75 (Q3): 15.4 µs
+P90:    16.7 µs
+P99:    18.7 µs
+P99.9:  38.3 µs
+Max:    1.643 ms
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_mixed_client_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-------------------------------------------------------------------
+Min:    4.1 µs
+P25 (Q1): 5.1 µs
+P50 (Median): 5.4 µs
+P75 (Q3): 5.7 µs
+P90:    6.8 µs
+P99:    8.5 µs
+P99.9:  11.9 µs
+Max:    291.6 µs
+-------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_mixed_client_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    4.2 µs
+P25 (Q1): 4.6 µs
+P50 (Median): 4.8 µs
+P75 (Q3): 5.0 µs
+P90:    5.5 µs
+P99:    7.4 µs
+P99.9:  13.8 µs
+Max:    298.7 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_mixed_server_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-------------------------------------------------------------------
+Min:    11.8 µs
+P25 (Q1): 12.8 µs
+P50 (Median): 13.0 µs
+P75 (Q3): 13.4 µs
+P90:    13.8 µs
+P99:    15.3 µs
+P99.9:  16.9 µs
+Max:    76.5 µs
+-------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_mixed_server_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    11.9 µs
+P25 (Q1): 12.7 µs
+P50 (Median): 13.0 µs
+P75 (Q3): 13.4 µs
+P90:    13.7 µs
+P99:    15.4 µs
+P99.9:  16.8 µs
+Max:    356.3 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_throughput_balanced_large_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-------------------------------------------------------------------------
+Min:    39.4 µs
+P25 (Q1): 42.8 µs
+P50 (Median): 43.8 µs
+P75 (Q3): 45.5 µs
+P90:    46.6 µs
+P99:    49.2 µs
+P99.9:  59.4 µs
+Max:    328.6 µs
+-------------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_throughput_balanced_large_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------------
+Min:    39.5 µs
+P25 (Q1): 42.7 µs
+P50 (Median): 43.8 µs
+P75 (Q3): 45.5 µs
+P90:    46.6 µs
+P99:    47.7 µs
+P99.9:  50.3 µs
+Max:    419.9 µs
+---------------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_throughput_downlink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-------------------------------------------------------------------------
+Min:    34.2 µs
+P25 (Q1): 35.7 µs
+P50 (Median): 36.3 µs
+P75 (Q3): 37.2 µs
+P90:    38.0 µs
+P99:    39.9 µs
+P99.9:  42.3 µs
+Max:    353.6 µs
+-------------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_throughput_downlink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------------
+Min:    38.8 µs
+P25 (Q1): 40.3 µs
+P50 (Median): 41.0 µs
+P75 (Q3): 41.8 µs
+P90:    42.7 µs
+P99:    44.5 µs
+P99.9:  47.1 µs
+Max:    384.3 µs
+---------------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_throughput_uplink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    3.5 µs
+P25 (Q1): 4.7 µs
+P50 (Median): 4.8 µs
+P75 (Q3): 5.0 µs
+P90:    5.7 µs
+P99:    7.7 µs
+P99.9:  11.6 µs
+Max:    298.4 µs
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_boost_unix_throughput_uplink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-------------------------------------------------------------------------
+Min:    4.1 µs
+P25 (Q1): 4.6 µs
+P50 (Median): 4.7 µs
+P75 (Q3): 4.9 µs
+P90:    6.1 µs
+P99:    7.1 µs
+P99.9:  12.2 µs
+Max:    319.2 µs
+-------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpc_tcp_latency_small_small_copy.bin ---
+Total data points: 300000
+Excluded negative values: 300000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_latency_small_small_no_copy.bin ---
+Total data points: 300000
+Excluded negative values: 300000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_latency_small_small_vectored.bin ---
+Total data points: 300000
+Excluded negative values: 300000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_mixed_balanced_random_copy.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_mixed_balanced_random_no_copy.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_mixed_balanced_random_vectored.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_mixed_client_random_copy.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_mixed_client_random_no_copy.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_mixed_client_random_vectored.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_mixed_server_random_copy.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_mixed_server_random_no_copy.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_mixed_server_random_vectored.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_throughput_balanced_large_copy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_throughput_balanced_large_no_copy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_throughput_balanced_large_vectored.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_throughput_downlink_heavy_copy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_throughput_downlink_heavy_no_copy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_throughput_downlink_heavy_vectored.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_throughput_uplink_heavy_copy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_throughput_uplink_heavy_no_copy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_tcp_throughput_uplink_heavy_vectored.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_latency_small_small_copy.bin ---
+Total data points: 300000
+Excluded negative values: 300000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_latency_small_small_no_copy.bin ---
+Total data points: 300000
+Excluded negative values: 300000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_latency_small_small_vectored.bin ---
+Total data points: 300000
+Excluded negative values: 300000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_mixed_balanced_random_copy.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_mixed_balanced_random_no_copy.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_mixed_balanced_random_vectored.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_mixed_client_random_copy.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_mixed_client_random_no_copy.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_mixed_client_random_vectored.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_mixed_server_random_copy.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_mixed_server_random_no_copy.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_mixed_server_random_vectored.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_throughput_balanced_large_copy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_throughput_balanced_large_no_copy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_throughput_balanced_large_vectored.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_throughput_downlink_heavy_copy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_throughput_downlink_heavy_no_copy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_throughput_downlink_heavy_vectored.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_throughput_uplink_heavy_copy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_throughput_uplink_heavy_no_copy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpc_unix_throughput_uplink_heavy_vectored.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_httpcpp_tcp_latency_small_small_safe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+--------------------------------------------------------------------
+Min:    4.6 µs
+P25 (Q1): 5.1 µs
+P50 (Median): 5.3 µs
+P75 (Q3): 6.2 µs
+P90:    7.0 µs
+P99:    7.8 µs
+P99.9:  10.8 µs
+Max:    359.6 µs
+--------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_latency_small_small_unsafe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    4.5 µs
+P25 (Q1): 4.9 µs
+P50 (Median): 5.1 µs
+P75 (Q3): 6.1 µs
+P90:    6.8 µs
+P99:    7.6 µs
+P99.9:  10.6 µs
+Max:    321.7 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_mixed_balanced_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    13.8 µs
+P25 (Q1): 18.0 µs
+P50 (Median): 24.8 µs
+P75 (Q3): 25.9 µs
+P90:    27.2 µs
+P99:    30.0 µs
+P99.9:  33.0 µs
+Max:    796.5 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_mixed_balanced_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+------------------------------------------------------------------------
+Min:    11.5 µs
+P25 (Q1): 16.2 µs
+P50 (Median): 22.3 µs
+P75 (Q3): 23.5 µs
+P90:    24.9 µs
+P99:    27.5 µs
+P99.9:  30.4 µs
+Max:    134.6 µs
+------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_mixed_client_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+--------------------------------------------------------------------
+Min:    5.2 µs
+P25 (Q1): 7.8 µs
+P50 (Median): 8.9 µs
+P75 (Q3): 10.5 µs
+P90:    16.1 µs
+P99:    18.8 µs
+P99.9:  22.1 µs
+Max:    531.3 µs
+--------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_mixed_client_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    5.1 µs
+P25 (Q1): 7.6 µs
+P50 (Median): 8.7 µs
+P75 (Q3): 10.2 µs
+P90:    15.9 µs
+P99:    18.6 µs
+P99.9:  22.3 µs
+Max:    872.5 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_mixed_server_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+--------------------------------------------------------------------
+Min:    15.9 µs
+P25 (Q1): 17.9 µs
+P50 (Median): 18.1 µs
+P75 (Q3): 18.4 µs
+P90:    18.9 µs
+P99:    20.1 µs
+P99.9:  22.7 µs
+Max:    150.3 µs
+--------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_mixed_server_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    14.4 µs
+P25 (Q1): 16.0 µs
+P50 (Median): 16.3 µs
+P75 (Q3): 16.6 µs
+P90:    17.0 µs
+P99:    18.1 µs
+P99.9:  20.4 µs
+Max:    334.3 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_throughput_balanced_large_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+--------------------------------------------------------------------------
+Min:    58.7 µs
+P25 (Q1): 64.1 µs
+P50 (Median): 66.6 µs
+P75 (Q3): 68.2 µs
+P90:    69.5 µs
+P99:    71.9 µs
+P99.9:  77.9 µs
+Max:    410.5 µs
+--------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_throughput_balanced_large_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+----------------------------------------------------------------------------
+Min:    38.1 µs
+P25 (Q1): 45.9 µs
+P50 (Median): 47.1 µs
+P75 (Q3): 48.4 µs
+P90:    49.6 µs
+P99:    52.3 µs
+P99.9:  68.4 µs
+Max:    332.2 µs
+----------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_throughput_downlink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+--------------------------------------------------------------------------
+Min:    51.9 µs
+P25 (Q1): 55.8 µs
+P50 (Median): 56.6 µs
+P75 (Q3): 57.7 µs
+P90:    58.4 µs
+P99:    60.7 µs
+P99.9:  63.3 µs
+Max:    784.9 µs
+--------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_throughput_downlink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+----------------------------------------------------------------------------
+Min:    49.9 µs
+P25 (Q1): 53.5 µs
+P50 (Median): 54.0 µs
+P75 (Q3): 54.9 µs
+P90:    56.0 µs
+P99:    57.8 µs
+P99.9:  61.1 µs
+Max:    619.0 µs
+----------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_throughput_uplink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+------------------------------------------------------------------------
+Min:    5.3 µs
+P25 (Q1): 7.3 µs
+P50 (Median): 8.6 µs
+P75 (Q3): 15.5 µs
+P90:    16.5 µs
+P99:    19.0 µs
+P99.9:  21.5 µs
+Max:    157.0 µs
+------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_tcp_throughput_uplink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+--------------------------------------------------------------------------
+Min:    5.9 µs
+P25 (Q1): 15.0 µs
+P50 (Median): 16.2 µs
+P75 (Q3): 17.0 µs
+P90:    17.7 µs
+P99:    21.2 µs
+P99.9:  23.0 µs
+Max:    305.2 µs
+--------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_latency_small_small_safe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    4.0 µs
+P25 (Q1): 4.4 µs
+P50 (Median): 4.5 µs
+P75 (Q3): 4.6 µs
+P90:    4.7 µs
+P99:    7.8 µs
+P99.9:  10.2 µs
+Max:    321.9 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_latency_small_small_unsafe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    3.9 µs
+P25 (Q1): 4.3 µs
+P50 (Median): 4.4 µs
+P75 (Q3): 4.5 µs
+P90:    4.6 µs
+P99:    7.7 µs
+P99.9:  11.0 µs
+Max:    33.5 µs
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_mixed_balanced_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    13.6 µs
+P25 (Q1): 18.2 µs
+P50 (Median): 25.2 µs
+P75 (Q3): 25.9 µs
+P90:    26.9 µs
+P99:    30.2 µs
+P99.9:  46.2 µs
+Max:    365.5 µs
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_mixed_balanced_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-------------------------------------------------------------------------
+Min:    11.4 µs
+P25 (Q1): 15.8 µs
+P50 (Median): 22.6 µs
+P75 (Q3): 23.1 µs
+P90:    24.1 µs
+P99:    27.5 µs
+P99.9:  44.6 µs
+Max:    804.9 µs
+-------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_mixed_client_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    4.4 µs
+P25 (Q1): 8.1 µs
+P50 (Median): 10.4 µs
+P75 (Q3): 12.0 µs
+P90:    18.1 µs
+P99:    20.3 µs
+P99.9:  24.3 µs
+Max:    57.5 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_mixed_client_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    4.1 µs
+P25 (Q1): 10.5 µs
+P50 (Median): 11.7 µs
+P75 (Q3): 12.3 µs
+P90:    13.0 µs
+P99:    16.2 µs
+P99.9:  20.7 µs
+Max:    337.8 µs
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_mixed_server_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    14.2 µs
+P25 (Q1): 14.8 µs
+P50 (Median): 15.1 µs
+P75 (Q3): 15.3 µs
+P90:    15.7 µs
+P99:    17.0 µs
+P99.9:  19.1 µs
+Max:    452.4 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_mixed_server_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    12.0 µs
+P25 (Q1): 13.1 µs
+P50 (Median): 13.3 µs
+P75 (Q3): 13.6 µs
+P90:    13.9 µs
+P99:    15.2 µs
+P99.9:  16.7 µs
+Max:    309.3 µs
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_throughput_balanced_large_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------------
+Min:    45.4 µs
+P25 (Q1): 49.8 µs
+P50 (Median): 62.9 µs
+P75 (Q3): 65.6 µs
+P90:    70.3 µs
+P99:    72.1 µs
+P99.9:  75.5 µs
+Max:    375.3 µs
+---------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_throughput_balanced_large_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-----------------------------------------------------------------------------
+Min:    39.7 µs
+P25 (Q1): 54.9 µs
+P50 (Median): 55.6 µs
+P75 (Q3): 56.1 µs
+P90:    56.5 µs
+P99:    59.1 µs
+P99.9:  75.2 µs
+Max:    1.742 ms
+-----------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_throughput_downlink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------------
+Min:    46.8 µs
+P25 (Q1): 47.9 µs
+P50 (Median): 48.8 µs
+P75 (Q3): 50.6 µs
+P90:    51.4 µs
+P99:    53.2 µs
+P99.9:  56.4 µs
+Max:    639.7 µs
+---------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_throughput_downlink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-----------------------------------------------------------------------------
+Min:    39.4 µs
+P25 (Q1): 41.2 µs
+P50 (Median): 41.5 µs
+P75 (Q3): 41.8 µs
+P90:    42.2 µs
+P99:    44.7 µs
+P99.9:  47.0 µs
+Max:    656.8 µs
+-----------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_throughput_uplink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-------------------------------------------------------------------------
+Min:    4.0 µs
+P25 (Q1): 5.5 µs
+P50 (Median): 6.8 µs
+P75 (Q3): 8.5 µs
+P90:    15.8 µs
+P99:    17.3 µs
+P99.9:  21.3 µs
+Max:    312.2 µs
+-------------------------------------------------------------------------
+
+--- Analysis for: latencies_httpcpp_unix_throughput_uplink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------------
+Min:    3.7 µs
+P25 (Q1): 5.4 µs
+P50 (Median): 6.7 µs
+P75 (Q3): 9.3 µs
+P90:    15.8 µs
+P99:    17.3 µs
+P99.9:  21.5 µs
+Max:    64.3 µs
+---------------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_latency_small_small_safe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+-------------------------------------------------------------------
+Min:    8.6 µs
+P25 (Q1): 9.1 µs
+P50 (Median): 9.3 µs
+P75 (Q3): 9.6 µs
+P90:    10.7 µs
+P99:    11.2 µs
+P99.9:  20.2 µs
+Max:    90.7 µs
+-------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_latency_small_small_unsafe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    7.5 µs
+P25 (Q1): 8.1 µs
+P50 (Median): 8.3 µs
+P75 (Q3): 8.6 µs
+P90:    9.7 µs
+P99:    10.2 µs
+P99.9:  12.2 µs
+Max:    307.7 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_mixed_balanced_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    39.6 µs
+P25 (Q1): 42.2 µs
+P50 (Median): 43.2 µs
+P75 (Q3): 46.4 µs
+P90:    50.4 µs
+P99:    68.4 µs
+P99.9:  75.3 µs
+Max:    366.6 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_mixed_balanced_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    34.9 µs
+P25 (Q1): 38.3 µs
+P50 (Median): 39.1 µs
+P75 (Q3): 41.8 µs
+P90:    45.1 µs
+P99:    53.2 µs
+P99.9:  66.5 µs
+Max:    353.0 µs
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_mixed_client_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-------------------------------------------------------------------
+Min:    9.2 µs
+P25 (Q1): 11.7 µs
+P50 (Median): 12.3 µs
+P75 (Q3): 13.7 µs
+P90:    17.6 µs
+P99:    22.7 µs
+P99.9:  34.9 µs
+Max:    888.1 µs
+-------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_mixed_client_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    6.5 µs
+P25 (Q1): 8.8 µs
+P50 (Median): 9.3 µs
+P75 (Q3): 10.2 µs
+P90:    13.7 µs
+P99:    19.0 µs
+P99.9:  29.0 µs
+Max:    299.5 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_mixed_server_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-------------------------------------------------------------------
+Min:    41.9 µs
+P25 (Q1): 44.9 µs
+P50 (Median): 45.3 µs
+P75 (Q3): 45.8 µs
+P90:    46.4 µs
+P99:    48.6 µs
+P99.9:  51.3 µs
+Max:    406.7 µs
+-------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_mixed_server_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    36.9 µs
+P25 (Q1): 40.1 µs
+P50 (Median): 40.5 µs
+P75 (Q3): 41.3 µs
+P90:    42.3 µs
+P99:    45.3 µs
+P99.9:  48.0 µs
+Max:    585.6 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_throughput_balanced_large_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-------------------------------------------------------------------------
+Min:    146.9 µs
+P25 (Q1): 151.9 µs
+P50 (Median): 155.6 µs
+P75 (Q3): 160.5 µs
+P90:    216.8 µs
+P99:    252.2 µs
+P99.9:  267.7 µs
+Max:    1.887 ms
+-------------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_throughput_balanced_large_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------------
+Min:    136.9 µs
+P25 (Q1): 143.6 µs
+P50 (Median): 146.4 µs
+P75 (Q3): 150.4 µs
+P90:    155.8 µs
+P99:    237.5 µs
+P99.9:  262.1 µs
+Max:    505.1 µs
+---------------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_throughput_downlink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-------------------------------------------------------------------------
+Min:    144.5 µs
+P25 (Q1): 167.3 µs
+P50 (Median): 168.6 µs
+P75 (Q3): 170.0 µs
+P90:    171.4 µs
+P99:    180.0 µs
+P99.9:  302.1 µs
+Max:    1.935 ms
+-------------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_throughput_downlink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------------
+Min:    124.3 µs
+P25 (Q1): 144.8 µs
+P50 (Median): 146.1 µs
+P75 (Q3): 147.7 µs
+P90:    149.8 µs
+P99:    155.5 µs
+P99.9:  246.5 µs
+Max:    1.850 ms
+---------------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_throughput_uplink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    8.2 µs
+P25 (Q1): 10.3 µs
+P50 (Median): 10.7 µs
+P75 (Q3): 11.3 µs
+P90:    12.2 µs
+P99:    18.9 µs
+P99.9:  31.4 µs
+Max:    582.2 µs
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_tcp_throughput_uplink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-------------------------------------------------------------------------
+Min:    7.7 µs
+P25 (Q1): 9.0 µs
+P50 (Median): 9.2 µs
+P75 (Q3): 9.7 µs
+P90:    11.2 µs
+P99:    16.4 µs
+P99.9:  24.1 µs
+Max:    311.8 µs
+-------------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_latency_small_small_safe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+--------------------------------------------------------------------
+Min:    7.9 µs
+P25 (Q1): 8.4 µs
+P50 (Median): 8.8 µs
+P75 (Q3): 9.2 µs
+P90:    9.4 µs
+P99:    13.0 µs
+P99.9:  23.1 µs
+Max:    107.3 µs
+--------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_latency_small_small_unsafe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    6.9 µs
+P25 (Q1): 7.4 µs
+P50 (Median): 7.7 µs
+P75 (Q3): 8.1 µs
+P90:    8.3 µs
+P99:    12.1 µs
+P99.9:  20.4 µs
+Max:    38.3 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_mixed_balanced_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    37.0 µs
+P25 (Q1): 40.1 µs
+P50 (Median): 40.6 µs
+P75 (Q3): 41.2 µs
+P90:    45.0 µs
+P99:    70.6 µs
+P99.9:  85.0 µs
+Max:    139.9 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_mixed_balanced_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+------------------------------------------------------------------------
+Min:    33.1 µs
+P25 (Q1): 36.1 µs
+P50 (Median): 36.5 µs
+P75 (Q3): 37.1 µs
+P90:    40.1 µs
+P99:    60.5 µs
+P99.9:  74.9 µs
+Max:    1.697 ms
+------------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_mixed_client_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+--------------------------------------------------------------------
+Min:    8.4 µs
+P25 (Q1): 10.1 µs
+P50 (Median): 10.6 µs
+P75 (Q3): 11.1 µs
+P90:    11.5 µs
+P99:    14.9 µs
+P99.9:  24.8 µs
+Max:    311.9 µs
+--------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_mixed_client_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    7.5 µs
+P25 (Q1): 8.9 µs
+P50 (Median): 9.3 µs
+P75 (Q3): 9.7 µs
+P90:    10.1 µs
+P99:    13.6 µs
+P99.9:  23.4 µs
+Max:    51.9 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_mixed_server_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+--------------------------------------------------------------------
+Min:    38.3 µs
+P25 (Q1): 40.8 µs
+P50 (Median): 41.5 µs
+P75 (Q3): 42.6 µs
+P90:    43.2 µs
+P99:    44.7 µs
+P99.9:  47.3 µs
+Max:    147.2 µs
+--------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_mixed_server_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    33.0 µs
+P25 (Q1): 35.6 µs
+P50 (Median): 36.1 µs
+P75 (Q3): 36.7 µs
+P90:    37.4 µs
+P99:    41.0 µs
+P99.9:  43.7 µs
+Max:    132.8 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_throughput_balanced_large_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+--------------------------------------------------------------------------
+Min:    131.6 µs
+P25 (Q1): 143.6 µs
+P50 (Median): 146.7 µs
+P75 (Q3): 150.5 µs
+P90:    214.9 µs
+P99:    244.4 µs
+P99.9:  253.5 µs
+Max:    1.941 ms
+--------------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_throughput_balanced_large_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+----------------------------------------------------------------------------
+Min:    117.9 µs
+P25 (Q1): 128.9 µs
+P50 (Median): 130.5 µs
+P75 (Q3): 133.8 µs
+P90:    140.4 µs
+P99:    221.2 µs
+P99.9:  241.0 µs
+Max:    1.852 ms
+----------------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_throughput_downlink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+--------------------------------------------------------------------------
+Min:    163.0 µs
+P25 (Q1): 179.8 µs
+P50 (Median): 194.5 µs
+P75 (Q3): 369.0 µs
+P90:    370.7 µs
+P99:    380.6 µs
+P99.9:  395.8 µs
+Max:    827.3 µs
+--------------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_throughput_downlink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+----------------------------------------------------------------------------
+Min:    142.2 µs
+P25 (Q1): 162.1 µs
+P50 (Median): 163.4 µs
+P75 (Q3): 166.6 µs
+P90:    168.8 µs
+P99:    251.0 µs
+P99.9:  291.3 µs
+Max:    884.9 µs
+----------------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_throughput_uplink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+------------------------------------------------------------------------
+Min:    8.4 µs
+P25 (Q1): 9.4 µs
+P50 (Median): 9.8 µs
+P75 (Q3): 10.2 µs
+P90:    10.4 µs
+P99:    13.8 µs
+P99.9:  16.5 µs
+Max:    327.7 µs
+------------------------------------------------------------------------
+
+--- Analysis for: latencies_httppy_unix_throughput_uplink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+--------------------------------------------------------------------------
+Min:    7.4 µs
+P25 (Q1): 8.3 µs
+P50 (Median): 8.8 µs
+P75 (Q3): 9.1 µs
+P90:    9.3 µs
+P99:    12.7 µs
+P99.9:  20.8 µs
+Max:    77.6 µs
+--------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_latency_small_small_safe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    4.7 µs
+P25 (Q1): 5.1 µs
+P50 (Median): 5.3 µs
+P75 (Q3): 6.3 µs
+P90:    7.0 µs
+P99:    7.7 µs
+P99.9:  10.6 µs
+Max:    314.6 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_latency_small_small_unsafe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    4.6 µs
+P25 (Q1): 5.0 µs
+P50 (Median): 5.1 µs
+P75 (Q3): 6.1 µs
+P90:    6.8 µs
+P99:    7.1 µs
+P99.9:  9.7 µs
+Max:    333.6 µs
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_mixed_balanced_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    14.8 µs
+P25 (Q1): 30.1 µs
+P50 (Median): 32.7 µs
+P75 (Q3): 34.4 µs
+P90:    35.6 µs
+P99:    38.5 µs
+P99.9:  45.9 µs
+Max:    342.3 µs
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_mixed_balanced_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-------------------------------------------------------------------------
+Min:    12.8 µs
+P25 (Q1): 27.1 µs
+P50 (Median): 29.5 µs
+P75 (Q3): 31.0 µs
+P90:    32.3 µs
+P99:    36.0 µs
+P99.9:  52.8 µs
+Max:    1.702 ms
+-------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_mixed_client_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    5.4 µs
+P25 (Q1): 23.7 µs
+P50 (Median): 25.6 µs
+P75 (Q3): 26.7 µs
+P90:    27.6 µs
+P99:    29.9 µs
+P99.9:  32.8 µs
+Max:    369.6 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_mixed_client_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    5.0 µs
+P25 (Q1): 23.5 µs
+P50 (Median): 25.0 µs
+P75 (Q3): 26.1 µs
+P90:    27.0 µs
+P99:    29.4 µs
+P99.9:  32.1 µs
+Max:    900.9 µs
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_mixed_server_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    15.6 µs
+P25 (Q1): 18.3 µs
+P50 (Median): 18.6 µs
+P75 (Q3): 18.9 µs
+P90:    19.5 µs
+P99:    20.7 µs
+P99.9:  23.4 µs
+Max:    417.6 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_mixed_server_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    14.1 µs
+P25 (Q1): 16.4 µs
+P50 (Median): 16.7 µs
+P75 (Q3): 17.1 µs
+P90:    17.7 µs
+P99:    18.7 µs
+P99.9:  20.6 µs
+Max:    358.8 µs
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_throughput_balanced_large_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------------
+Min:    52.5 µs
+P25 (Q1): 58.9 µs
+P50 (Median): 60.1 µs
+P75 (Q3): 61.1 µs
+P90:    64.0 µs
+P99:    155.4 µs
+P99.9:  162.9 µs
+Max:    467.0 µs
+---------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_throughput_balanced_large_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-----------------------------------------------------------------------------
+Min:    47.8 µs
+P25 (Q1): 54.5 µs
+P50 (Median): 55.9 µs
+P75 (Q3): 56.8 µs
+P90:    57.6 µs
+P99:    61.8 µs
+P99.9:  67.6 µs
+Max:    177.1 µs
+-----------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_throughput_downlink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------------
+Min:    58.7 µs
+P25 (Q1): 65.0 µs
+P50 (Median): 65.5 µs
+P75 (Q3): 66.0 µs
+P90:    66.6 µs
+P99:    70.1 µs
+P99.9:  73.8 µs
+Max:    814.2 µs
+---------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_throughput_downlink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-----------------------------------------------------------------------------
+Min:    41.6 µs
+P25 (Q1): 47.1 µs
+P50 (Median): 47.7 µs
+P75 (Q3): 48.3 µs
+P90:    49.8 µs
+P99:    51.7 µs
+P99.9:  53.7 µs
+Max:    380.6 µs
+-----------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_throughput_uplink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-------------------------------------------------------------------------
+Min:    5.6 µs
+P25 (Q1): 13.5 µs
+P50 (Median): 14.4 µs
+P75 (Q3): 15.1 µs
+P90:    15.7 µs
+P99:    17.7 µs
+P99.9:  20.7 µs
+Max:    114.7 µs
+-------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_tcp_throughput_uplink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------------
+Min:    5.9 µs
+P25 (Q1): 14.9 µs
+P50 (Median): 16.1 µs
+P75 (Q3): 16.9 µs
+P90:    17.5 µs
+P99:    19.5 µs
+P99.9:  34.8 µs
+Max:    317.1 µs
+---------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_latency_small_small_safe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    4.2 µs
+P25 (Q1): 4.5 µs
+P50 (Median): 4.6 µs
+P75 (Q3): 4.7 µs
+P90:    4.8 µs
+P99:    7.8 µs
+P99.9:  10.3 µs
+Max:    337.5 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_latency_small_small_unsafe.bin ---
+Total data points: 300000
+Excluded negative values: 0
+------------------------------------------------------------------------
+Min:    4.0 µs
+P25 (Q1): 4.3 µs
+P50 (Median): 4.4 µs
+P75 (Q3): 4.5 µs
+P90:    4.6 µs
+P99:    7.7 µs
+P99.9:  10.2 µs
+Max:    310.6 µs
+------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_mixed_balanced_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+------------------------------------------------------------------------
+Min:    14.4 µs
+P25 (Q1): 26.6 µs
+P50 (Median): 30.9 µs
+P75 (Q3): 34.2 µs
+P90:    36.4 µs
+P99:    45.7 µs
+P99.9:  58.4 µs
+Max:    249.0 µs
+------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_mixed_balanced_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+--------------------------------------------------------------------------
+Min:    12.8 µs
+P25 (Q1): 23.7 µs
+P50 (Median): 27.8 µs
+P75 (Q3): 31.2 µs
+P90:    33.1 µs
+P99:    42.4 µs
+P99.9:  55.8 µs
+Max:    217.9 µs
+--------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_mixed_client_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    4.5 µs
+P25 (Q1): 29.9 µs
+P50 (Median): 32.5 µs
+P75 (Q3): 33.8 µs
+P90:    34.6 µs
+P99:    36.8 µs
+P99.9:  39.8 µs
+Max:    341.0 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_mixed_client_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+------------------------------------------------------------------------
+Min:    5.2 µs
+P25 (Q1): 30.5 µs
+P50 (Median): 32.2 µs
+P75 (Q3): 34.3 µs
+P90:    35.5 µs
+P99:    37.4 µs
+P99.9:  40.8 µs
+Max:    339.6 µs
+------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_mixed_server_random_safe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    13.6 µs
+P25 (Q1): 15.3 µs
+P50 (Median): 15.5 µs
+P75 (Q3): 15.8 µs
+P90:    16.1 µs
+P99:    17.5 µs
+P99.9:  18.7 µs
+Max:    90.9 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_mixed_server_random_unsafe.bin ---
+Total data points: 75000
+Excluded negative values: 0
+------------------------------------------------------------------------
+Min:    12.0 µs
+P25 (Q1): 13.4 µs
+P50 (Median): 13.6 µs
+P75 (Q3): 13.9 µs
+P90:    14.2 µs
+P99:    15.7 µs
+P99.9:  17.0 µs
+Max:    81.7 µs
+------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_throughput_balanced_large_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+----------------------------------------------------------------------------
+Min:    46.4 µs
+P25 (Q1): 48.6 µs
+P50 (Median): 50.8 µs
+P75 (Q3): 56.8 µs
+P90:    78.1 µs
+P99:    150.7 µs
+P99.9:  177.1 µs
+Max:    413.1 µs
+----------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_throughput_balanced_large_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+------------------------------------------------------------------------------
+Min:    34.4 µs
+P25 (Q1): 36.6 µs
+P50 (Median): 39.3 µs
+P75 (Q3): 52.1 µs
+P90:    65.4 µs
+P99:    67.4 µs
+P99.9:  71.2 µs
+Max:    375.2 µs
+------------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_throughput_downlink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+----------------------------------------------------------------------------
+Min:    46.9 µs
+P25 (Q1): 48.9 µs
+P50 (Median): 49.2 µs
+P75 (Q3): 49.5 µs
+P90:    49.9 µs
+P99:    53.0 µs
+P99.9:  56.0 µs
+Max:    535.2 µs
+----------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_throughput_downlink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+------------------------------------------------------------------------------
+Min:    41.0 µs
+P25 (Q1): 43.2 µs
+P50 (Median): 43.4 µs
+P75 (Q3): 43.7 µs
+P90:    44.0 µs
+P99:    46.3 µs
+P99.9:  49.6 µs
+Max:    418.5 µs
+------------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_throughput_uplink_heavy_safe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+--------------------------------------------------------------------------
+Min:    4.2 µs
+P25 (Q1): 7.6 µs
+P50 (Median): 8.9 µs
+P75 (Q3): 10.3 µs
+P90:    11.4 µs
+P99:    18.9 µs
+P99.9:  22.7 µs
+Max:    312.2 µs
+--------------------------------------------------------------------------
+
+--- Analysis for: latencies_httprust_unix_throughput_uplink_heavy_unsafe.bin ---
+Total data points: 50000
+Excluded negative values: 0
+----------------------------------------------------------------------------
+Min:    3.9 µs
+P25 (Q1): 7.4 µs
+P50 (Median): 8.8 µs
+P75 (Q3): 10.3 µs
+P90:    11.4 µs
+P99:    18.7 µs
+P99.9:  22.5 µs
+Max:    324.8 µs
+----------------------------------------------------------------------------
+
+--- Analysis for: latencies_libcurl_tcp_latency_small_small.bin ---
+Total data points: 300000
+Excluded negative values: 300000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_tcp_mixed_balanced_random.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_tcp_mixed_client_random.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_tcp_mixed_server_random.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_tcp_throughput_balanced_large.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_tcp_throughput_downlink_heavy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_tcp_throughput_uplink_heavy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_unix_latency_small_small.bin ---
+Total data points: 300000
+Excluded negative values: 300000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_unix_mixed_balanced_random.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_unix_mixed_client_random.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_unix_mixed_server_random.bin ---
+Total data points: 75000
+Excluded negative values: 75000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_unix_throughput_balanced_large.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_unix_throughput_downlink_heavy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_libcurl_unix_throughput_uplink_heavy.bin ---
+Total data points: 50000
+Excluded negative values: 50000
+No valid data points found for analysis.
+
+--- Analysis for: latencies_requests_tcp_latency_small_small.bin ---
+Total data points: 300000
+Excluded negative values: 0
+----------------------------------------------------------------
+Min:    75.5 µs
+P25 (Q1): 81.8 µs
+P50 (Median): 83.7 µs
+P75 (Q3): 86.9 µs
+P90:    91.2 µs
+P99:    95.8 µs
+P99.9:  104.3 µs
+Max:    1.744 ms
+----------------------------------------------------------------
+
+--- Analysis for: latencies_requests_tcp_mixed_balanced_random.bin ---
+Total data points: 75000
+Excluded negative values: 0
+------------------------------------------------------------------
+Min:    132.8 µs
+P25 (Q1): 144.1 µs
+P50 (Median): 147.7 µs
+P75 (Q3): 153.3 µs
+P90:    160.6 µs
+P99:    200.0 µs
+P99.9:  217.8 µs
+Max:    515.6 µs
+------------------------------------------------------------------
+
+--- Analysis for: latencies_requests_tcp_mixed_client_random.bin ---
+Total data points: 75000
+Excluded negative values: 0
+----------------------------------------------------------------
+Min:    77.8 µs
+P25 (Q1): 88.6 µs
+P50 (Median): 92.5 µs
+P75 (Q3): 97.5 µs
+P90:    105.2 µs
+P99:    145.0 µs
+P99.9:  158.9 µs
+Max:    399.6 µs
+----------------------------------------------------------------
+
+--- Analysis for: latencies_requests_tcp_mixed_server_random.bin ---
+Total data points: 75000
+Excluded negative values: 0
+----------------------------------------------------------------
+Min:    152.6 µs
+P25 (Q1): 169.4 µs
+P50 (Median): 172.9 µs
+P75 (Q3): 176.8 µs
+P90:    181.6 µs
+P99:    187.7 µs
+P99.9:  195.9 µs
+Max:    972.6 µs
+----------------------------------------------------------------
+
+--- Analysis for: latencies_requests_tcp_throughput_balanced_large.bin ---
+Total data points: 50000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    311.3 µs
+P25 (Q1): 324.7 µs
+P50 (Median): 328.4 µs
+P75 (Q3): 333.5 µs
+P90:    338.9 µs
+P99:    376.8 µs
+P99.9:  514.6 µs
+Max:    867.3 µs
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_requests_tcp_throughput_downlink_heavy.bin ---
+Total data points: 50000
+Excluded negative values: 0
+----------------------------------------------------------------------
+Min:    295.3 µs
+P25 (Q1): 310.0 µs
+P50 (Median): 314.7 µs
+P75 (Q3): 322.7 µs
+P90:    396.0 µs
+P99:    415.0 µs
+P99.9:  429.5 µs
+Max:    2.355 ms
+----------------------------------------------------------------------
+
+--- Analysis for: latencies_requests_tcp_throughput_uplink_heavy.bin ---
+Total data points: 50000
+Excluded negative values: 0
+--------------------------------------------------------------------
+Min:    81.1 µs
+P25 (Q1): 91.3 µs
+P50 (Median): 94.1 µs
+P75 (Q3): 99.0 µs
+P90:    108.2 µs
+P99:    138.2 µs
+P99.9:  156.1 µs
+Max:    463.2 µs
+--------------------------------------------------------------------
+
+--- Analysis for: latencies_requests_unix_latency_small_small.bin ---
+Total data points: 300000
+Excluded negative values: 0
+-----------------------------------------------------------------
+Min:    72.6 µs
+P25 (Q1): 79.9 µs
+P50 (Median): 82.1 µs
+P75 (Q3): 85.7 µs
+P90:    90.2 µs
+P99:    94.6 µs
+P99.9:  103.6 µs
+Max:    1.246 ms
+-----------------------------------------------------------------
+
+--- Analysis for: latencies_requests_unix_mixed_balanced_random.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-------------------------------------------------------------------
+Min:    130.3 µs
+P25 (Q1): 139.8 µs
+P50 (Median): 142.8 µs
+P75 (Q3): 147.5 µs
+P90:    153.9 µs
+P99:    189.6 µs
+P99.9:  232.7 µs
+Max:    1.865 ms
+-------------------------------------------------------------------
+
+--- Analysis for: latencies_requests_unix_mixed_client_random.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-----------------------------------------------------------------
+Min:    88.6 µs
+P25 (Q1): 101.0 µs
+P50 (Median): 104.5 µs
+P75 (Q3): 109.7 µs
+P90:    116.4 µs
+P99:    169.1 µs
+P99.9:  193.8 µs
+Max:    1.754 ms
+-----------------------------------------------------------------
+
+--- Analysis for: latencies_requests_unix_mixed_server_random.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-----------------------------------------------------------------
+Min:    127.1 µs
+P25 (Q1): 133.6 µs
+P50 (Median): 136.0 µs
+P75 (Q3): 140.3 µs
+P90:    146.6 µs
+P99:    167.9 µs
+P99.9:  174.4 µs
+Max:    1.810 ms
+-----------------------------------------------------------------
+
+--- Analysis for: latencies_requests_unix_throughput_balanced_large.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    300.5 µs
+P25 (Q1): 314.2 µs
+P50 (Median): 318.2 µs
+P75 (Q3): 324.7 µs
+P90:    334.6 µs
+P99:    407.6 µs
+P99.9:  496.5 µs
+Max:    2.056 ms
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_requests_unix_throughput_downlink_heavy.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-----------------------------------------------------------------------
+Min:    361.6 µs
+P25 (Q1): 377.2 µs
+P50 (Median): 383.0 µs
+P75 (Q3): 396.9 µs
+P90:    484.4 µs
+P99:    502.9 µs
+P99.9:  541.4 µs
+Max:    2.458 ms
+-----------------------------------------------------------------------
+
+--- Analysis for: latencies_requests_unix_throughput_uplink_heavy.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    79.2 µs
+P25 (Q1): 86.1 µs
+P50 (Median): 88.8 µs
+P75 (Q3): 92.9 µs
+P90:    97.9 µs
+P99:    135.1 µs
+P99.9:  161.0 µs
+Max:    991.0 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_reqwest_tcp_latency_small_small.bin ---
+Total data points: 300000
+Excluded negative values: 0
+---------------------------------------------------------------
+Min:    5.9 µs
+P25 (Q1): 8.3 µs
+P50 (Median): 8.5 µs
+P75 (Q3): 9.3 µs
+P90:    9.4 µs
+P99:    10.0 µs
+P99.9:  12.0 µs
+Max:    309.5 µs
+---------------------------------------------------------------
+
+--- Analysis for: latencies_reqwest_tcp_mixed_balanced_random.bin ---
+Total data points: 75000
+Excluded negative values: 0
+-----------------------------------------------------------------
+Min:    6.1 µs
+P25 (Q1): 14.2 µs
+P50 (Median): 14.6 µs
+P75 (Q3): 15.0 µs
+P90:    15.5 µs
+P99:    20.6 µs
+P99.9:  27.0 µs
+Max:    202.9 µs
+-----------------------------------------------------------------
+
+--- Analysis for: latencies_reqwest_tcp_mixed_client_random.bin ---
+Total data points: 75000
+Excluded negative values: 0
+---------------------------------------------------------------
+Min:    5.5 µs
+P25 (Q1): 9.1 µs
+P50 (Median): 9.7 µs
+P75 (Q3): 10.4 µs
+P90:    10.9 µs
+P99:    41.2 µs
+P99.9:  49.9 µs
+Max:    313.0 µs
+---------------------------------------------------------------
+
+--- Analysis for: latencies_reqwest_tcp_mixed_server_random.bin ---
+Total data points: 75000
+Excluded negative values: 0
+---------------------------------------------------------------
+Min:    6.8 µs
+P25 (Q1): 8.1 µs
+P50 (Median): 8.3 µs
+P75 (Q3): 13.4 µs
+P90:    14.1 µs
+P99:    15.0 µs
+P99.9:  16.4 µs
+Max:    596.8 µs
+---------------------------------------------------------------
+
+--- Analysis for: latencies_reqwest_tcp_throughput_balanced_large.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    5.6 µs
+P25 (Q1): 12.7 µs
+P50 (Median): 13.0 µs
+P75 (Q3): 13.4 µs
+P90:    13.9 µs
+P99:    16.6 µs
+P99.9:  26.3 µs
+Max:    505.1 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_reqwest_tcp_throughput_downlink_heavy.bin ---
+Total data points: 50000
+Excluded negative values: 0
+---------------------------------------------------------------------
+Min:    7.7 µs
+P25 (Q1): 14.8 µs
+P50 (Median): 15.1 µs
+P75 (Q3): 15.5 µs
+P90:    24.9 µs
+P99:    35.4 µs
+P99.9:  47.4 µs
+Max:    643.9 µs
+---------------------------------------------------------------------
+
+--- Analysis for: latencies_reqwest_tcp_throughput_uplink_heavy.bin ---
+Total data points: 50000
+Excluded negative values: 0
+-------------------------------------------------------------------
+Min:    5.5 µs
+P25 (Q1): 9.3 µs
+P50 (Median): 9.8 µs
+P75 (Q3): 10.7 µs
+P90:    11.4 µs
+P99:    56.2 µs
+P99.9:  62.1 µs
+Max:    303.4 µs
+-------------------------------------------------------------------
