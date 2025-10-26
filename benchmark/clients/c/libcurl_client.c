@@ -144,7 +144,7 @@ uint64_t xor_checksum(const char* data, size_t len) {
 
 uint64_t get_nanoseconds() {
     struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
+    clock_gettime(CLOCK_REALTIME, &ts);
     return (uint64_t)ts.tv_sec * 1000000000 + (uint64_t)ts.tv_nsec;
 }
 
