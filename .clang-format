@@ -1,0 +1,50 @@
+Language:        Cpp
+QualifierAlignment: Right
+AccessModifierOffset: -2
+AlignConsecutiveAssignments:
+       Enabled: true
+       AcrossEmptyLines: false
+       AcrossComments: false
+       AlignCompound: true
+       PadOperators: false
+AlignConsecutiveDeclarations: true # AcrossEmptyLines
+AlignOperands:   DontAlign
+AllowAllConstructorInitializersOnNextLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: true
+BraceWrapping:
+   AfterCaseLabel:  false
+   AfterClass:      false
+   AfterControlStatement: Never
+   AfterEnum:       false
+   AfterFunction:   false
+   AfterNamespace:  false
+   AfterObjCDeclaration: false
+   AfterStruct:     false
+   AfterUnion:      false
+   AfterExternBlock: false
+   BeforeCatch:     false
+   BeforeElse:      false
+   BeforeLambdaBody: false
+   BeforeWhile:     false
+   IndentBraces:    false
+   SplitEmptyFunction: true
+   SplitEmptyRecord: true
+   SplitEmptyNamespace: true
+BreakBeforeBraces: Custom
+BreakBeforeInheritanceComma: true
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializersBeforeComma: true
+BreakConstructorInitializers: BeforeComma
+ColumnLimit:     110
+CompactNamespaces: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+FixNamespaceComments: true
+IndentCaseLabels: true
+IndentPPDirectives: BeforeHash
+IndentWidth:     4
+NamespaceIndentation: All
+PointerAlignment: Left
+Standard:        Latest
+TabWidth:        4
+UseTab:          Never
