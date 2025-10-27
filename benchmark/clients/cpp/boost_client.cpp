@@ -1,12 +1,3 @@
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <numeric>
-#include <sstream>
-#include <string>
-#include <string_view>
-#include <vector>
-
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
@@ -14,6 +5,13 @@
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/program_options.hpp>
+#include <fstream>
+#include <iostream>
+#include <numeric>
+#include <spanstream>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace po    = boost::program_options;
 namespace asio  = boost::asio;
@@ -122,19 +120,16 @@ void run_benchmark(Stream& stream, Config const& config, BenchmarkData const& da
             http::request<http::string_body> req{http::verb::post, "/", 11};
             req.set(http::field::host, config.host);
             req.keep_alive(true);
-            uint64_t          checksum = xor_checksum(body_slice);
-            std::stringstream ss;
-            ss << std::hex << std::setw(16) << std::setfill('0') << checksum;
             payload_buffer.assign(body_slice);
-            payload_buffer.append(ss.str());
-            req.body() = payload_buffer;
+            std::format_to(back_inserter(payload_buffer), "{:016X}", xor_checksum(body_slice));
+            req.body() = std::move(payload_buffer);
             req.prepare_payload();
             http::write(stream, req, ec);
         } else if (config.unsafe_res) {
             http::request<http::span_body<char const>> req{http::verb::post, "/", 11};
             req.set(http::field::host, config.host);
             req.keep_alive(true);
-            req.body() = {body_slice.data(), body_slice.size()};
+            req.body() = body_slice;
             req.prepare_payload();
             http::write(stream, req, ec);
         } else {
@@ -181,15 +176,16 @@ void run_benchmark(Stream& stream, Config const& config, BenchmarkData const& da
             if (body.length() < 35) {
                 std::cerr << "Warning: Response body too short on request " << i << std::endl;
             } else {
-                auto              res_payload      = body.substr(0, body.length() - 35);
-                auto              res_checksum_hex = body.substr(body.length() - 35, 16);
-                uint64_t          calculated       = xor_checksum(res_payload);
-                uint64_t          received         = 0;
-                std::stringstream ss;
-                ss << std::hex << res_checksum_hex;
-                ss >> received;
-                if (calculated != received) {
-                    std::cerr << "Warning: Response checksum mismatch on request " << i << std::endl;
+                auto           res_payload      = body.substr(0, body.length() - 35);
+                auto           res_checksum_hex = body.substr(body.length() - 35, 16);
+                uint64_t const calculated       = xor_checksum(res_payload);
+
+                if (uint64_t received = 0; std::ispanstream(res_checksum_hex) >> std::hex >> received) {
+                    if (calculated != received) {
+                        std::cerr << "Warning: Response checksum mismatch on request " << i << std::endl;
+                    }
+                } else {
+                    std::cerr << "Warning: Response checksum cannot be parsed" << i << std::endl;
                 }
             }
         }

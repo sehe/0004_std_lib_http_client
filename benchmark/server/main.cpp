@@ -1,9 +1,10 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/program_options.hpp>
-#include <iomanip>
+#include <format>
 #include <iostream>
 #include <random>
+#include <spanstream>
 
 namespace beast = boost::beast;
 namespace http  = beast::http;
@@ -259,9 +260,7 @@ template <class Stream> void do_session(Stream& stream, ResponseCache const& cac
             uint64_t calculated_checksum = xor_checksum(payload_view);
             uint64_t received_checksum   = 0;
             if (received_checksum_hex.size() == 16) {
-                std::stringstream ss;
-                ss << std::hex << std::string(received_checksum_hex);
-                ss >> received_checksum;
+                std::ispanstream(received_checksum_hex) >> std::hex >> received_checksum;
             } else {
                 std::cerr << "Warning: Received checksum hex size is not 16 (" << received_checksum_hex.size()
                           << ")" << std::endl;
@@ -279,28 +278,25 @@ template <class Stream> void do_session(Stream& stream, ResponseCache const& cac
 
         if (config.verify) {
             uint64_t          checksum_val = xor_checksum(body_view);
-            std::stringstream ss;
-            ss << std::hex << std::setw(16) << std::setfill('0') << checksum_val;
-            std::string                       checksum_str = ss.str();
+
             http::response<http::string_body> res;
             res.base() = header_template;
-            res.body().reserve(body_view.size() + checksum_str.size() + ts_str.size());
+            res.body().reserve(body_view.size() + 16 + ts_str.size());
             res.body().append(body_view.data(), body_view.size());
-            res.body().append(checksum_str);
+
+            std::format_to(back_inserter(res.body()), "{:016X}", checksum_val);
             res.body().append(ts_str);
             res.prepare_payload();
             http::write(stream, res, ec);
         } else {
             http::response<http::span_body<char const>> res;
             res.base() = header_template;
-            res.body() = {body_view.data(), body_view.size()};
+            // res.body() = body_view;
             res.set(http::field::content_length, std::to_string(body_view.size() + ts_str.size()));
             http::serializer<false, decltype(res)::body_type> sr{res};
             http::write_header(stream, sr, ec);
             if (!ec) {
-                std::array<net::const_buffer, 2> buffers = {net::buffer(body_view.data(), body_view.size()),
-                                                            net::buffer(ts_str)};
-                net::write(stream, buffers, ec);
+                write(stream, std::array{net::buffer(body_view), net::buffer(std::string_view(ts_str))}, ec);
             }
         }
 
@@ -390,7 +386,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    net::io_context ioc;
+    net::io_context ioc(1);
 
     if (config.transport_type == "tcp") {
         auto const endpoint = tcp::endpoint{net::ip::make_address(config.host), config.port};
