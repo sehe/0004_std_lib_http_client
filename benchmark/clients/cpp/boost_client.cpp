@@ -1,17 +1,9 @@
-#include <boost/asio/connect.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/local/stream_protocol.hpp>
-#include <boost/beast/core.hpp>
-#include <boost/beast/http.hpp>
-#include <boost/beast/version.hpp>
+#include <boost/asio.hpp>
+#include <boost/beast.hpp>
 #include <boost/program_options.hpp>
 #include <fstream>
 #include <iostream>
-#include <numeric>
 #include <spanstream>
-#include <string>
-#include <string_view>
-#include <vector>
 
 namespace po    = boost::program_options;
 namespace asio  = boost::asio;
@@ -32,9 +24,10 @@ struct Config {
 };
 
 struct BenchmarkData {
-    uint64_t              num_requests;
-    std::vector<uint64_t> sizes;
-    std::string           data_block;
+    std::string               raw_file_content;
+    uint64_t                  num_requests;
+    std::span<uint64_t const> sizes;
+    std::string_view          data_block;
 };
 
 bool parse_args(int argc, char* argv[], Config& config) {
@@ -72,26 +65,31 @@ bool parse_args(int argc, char* argv[], Config& config) {
 }
 
 bool read_benchmark_data(std::string const& filename, BenchmarkData& data) {
-    std::ifstream file(filename, std::ios::binary);
-    if (!file) {
-        std::cerr << "Error: Could not open benchmark data file " << filename << std::endl;
-        return false;
+    static_assert(std::is_trivial_v<decltype(data.num_requests)>);
+    static_assert(std::is_trivial_v<decltype(data.sizes)::value_type>);
+    static_assert(std::is_trivial_v<decltype(data.data_block)::value_type>);
+
+    std::ifstream ifs(filename, std::ios::binary);
+    data.raw_file_content.assign(std::istreambuf_iterator<char>(ifs), {});
+
+    std::string_view remain(data.raw_file_content);
+
+    if (auto expect = sizeof(data.num_requests); remain.size() < expect)
+        throw std::length_error("data file too short");
+    else {
+        memcpy(&data.num_requests, remain.data(), expect);
+        remain.remove_prefix(expect);
     }
 
-    file.read(reinterpret_cast<char*>(&data.num_requests), sizeof(uint64_t));
-    data.sizes.resize(data.num_requests);
-    file.read(reinterpret_cast<char*>(data.sizes.data()), data.num_requests * sizeof(uint64_t));
+    if (auto expect = data.num_requests * sizeof(data.sizes.front()); remain.size() < expect)
+        throw std::length_error("data sizes segment too short");
+    else {
+        data.sizes = {reinterpret_cast<uint64_t const*>(remain.data()), data.num_requests};
+        remain.remove_prefix(expect);
+    }
 
-    auto current_pos = file.tellg();
-    file.seekg(0, std::ios::end);
-    auto end_pos = file.tellg();
-    file.seekg(current_pos);
-
-    size_t data_block_size = end_pos - current_pos;
-    data.data_block.resize(data_block_size);
-    file.read(data.data_block.data(), data_block_size);
-
-    return file.good();
+    data.data_block = remain;
+    return ifs.good();
 }
 
 uint64_t xor_checksum(std::string_view data) {
@@ -114,8 +112,8 @@ void run_benchmark(Stream& stream, Config const& config, BenchmarkData const& da
     beast::flat_buffer buffer;
 
     for (uint64_t i = 0; i < config.num_requests; ++i) {
-        size_t           req_size = data.sizes[i % data.sizes.size()];
-        std::string_view body_slice(data.data_block.data(), req_size);
+        size_t           req_size   = data.sizes[i % data.sizes.size()];
+        std::string_view body_slice = data.data_block.substr(0, req_size);
 
         if (config.verify) {
             http::request<http::string_body> req{http::verb::post, "/", 11};
@@ -127,17 +125,16 @@ void run_benchmark(Stream& stream, Config const& config, BenchmarkData const& da
             req.prepare_payload();
             http::write(stream, req, ec);
         } else if (config.unsafe_res) {
-            http::request<http::span_body<char const>> req{http::verb::post, "/", 11};
+            http::request<http::span_body<char const>> req{http::verb::post, "/", 11, body_slice};
             req.set(http::field::host, config.host);
             req.keep_alive(true);
-            req.body() = body_slice;
             req.prepare_payload();
             http::write(stream, req, ec);
         } else {
             http::request<http::string_body> req{http::verb::post, "/", 11};
             req.set(http::field::host, config.host);
             req.keep_alive(true);
-            req.body().assign(body_slice.data(), body_slice.size());
+            req.body().assign(body_slice);
             req.prepare_payload();
             http::write(stream, req, ec);
         }
@@ -218,8 +215,8 @@ int main(int argc, char* argv[]) {
     if (config.transport_type == "tcp") {
         tcp::resolver resolver(ioc);
         tcp::socket   socket(ioc);
-        auto const    results = resolver.resolve(config.host, std::to_string(config.port));
-        asio::connect(socket, results.begin(), results.end());
+        auto results = resolver.resolve(config.host, std::to_string(config.port));
+        asio::connect(socket, std::move(results));
         run_benchmark(socket, config, data, latencies);
         socket.shutdown(tcp::socket::shutdown_both, ec);
     } else if (config.transport_type == "unix") {
