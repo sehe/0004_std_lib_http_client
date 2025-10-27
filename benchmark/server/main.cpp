@@ -75,7 +75,7 @@ uint64_t xor_checksum(beast::string_view body) {
     uint64_t             sum  = 0;
     unsigned char const* data = reinterpret_cast<unsigned char const*>(body.data());
     for (size_t i = 0; i < body.size(); ++i) {
-        sum ^= data[i];
+        sum = std::rotr(sum, 7) ^ data[i];
     }
     return sum;
 }
@@ -277,7 +277,7 @@ template <class Stream> void do_session(Stream& stream, ResponseCache const& cac
         std::string ts_str          = get_timestamp_str();
 
         if (config.verify) {
-            uint64_t          checksum_val = xor_checksum(body_view);
+            uint64_t checksum_val = xor_checksum(body_view);
 
             http::response<http::string_body> res;
             res.base() = header_template;

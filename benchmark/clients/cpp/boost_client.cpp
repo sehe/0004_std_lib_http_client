@@ -95,8 +95,9 @@ bool read_benchmark_data(std::string const& filename, BenchmarkData& data) {
 }
 
 uint64_t xor_checksum(std::string_view data) {
-    return std::accumulate(data.begin(), data.end(), std::uint64_t{0},
-                           [](uint64_t acc, char c) { return acc ^ static_cast<unsigned char>(c); });
+    return std::accumulate(data.begin(), data.end(), std::uint64_t{0}, [](uint64_t acc, char c) {
+        return std::rotr(acc, 7) ^ static_cast<unsigned char>(c);
+    });
 }
 
 uint64_t get_nanoseconds() {
