@@ -92,11 +92,14 @@ bool read_benchmark_data(std::string const& filename, BenchmarkData& data) {
     return ifs.good();
 }
 
-uint64_t xor_checksum(std::string_view data) {
-    return std::accumulate(data.begin(), data.end(), std::uint64_t{0}, [](uint64_t acc, char c) {
-        return std::rotr(acc, 7) ^ static_cast<unsigned char>(c);
-    });
+uint64_t xor_checksum(auto b, auto e) {
+    uint64_t sum = 0;
+    for (auto it = b; it!=e; ++it)
+        sum = std::rotr(sum, 7) ^ static_cast<unsigned char>(*it);
+    return sum;
 }
+
+uint64_t xor_checksum(std::string_view sv) { return xor_checksum(sv.begin(), sv.end()); }
 
 uint64_t get_nanoseconds() {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -144,39 +147,24 @@ void run_benchmark(Stream& stream, Config const& config, BenchmarkData const& da
             break;
         }
 
-        http::response_parser<http::empty_body> parser;
-        parser.skip(true);
-        http::read_header(stream, buffer, parser, ec);
+        http::response<http::dynamic_body> response;
+        http::read(stream, buffer, response, ec);
         if (ec) {
-            std::cerr << "Read header failed: " << ec.message() << std::endl;
+            std::cerr << "Read failed: " << ec.message() << std::endl;
             break;
         }
 
-        if (parser.content_length()) {
-            size_t body_size = *parser.content_length();
-            buffer.reserve(body_size);
-            while (buffer.size() < body_size) {
-                size_t bytes_to_read = body_size - buffer.size();
-                size_t bytes_read    = stream.read_some(buffer.prepare(bytes_to_read), ec);
-                buffer.commit(bytes_read);
-                if (ec == http::error::end_of_stream)
-                    break;
-                if (ec) {
-                    std::cerr << "Read body failed: " << ec.message() << std::endl;
-                    return;
-                }
-            }
-        }
-        auto             client_receive_time = get_nanoseconds();
-        std::string_view body(static_cast<char const*>(buffer.data().data()), buffer.size());
+        auto client_receive_time = get_nanoseconds();
+
+        auto b = asio::buffers_begin(response.body().cdata()), e = asio::buffers_end(response.body().cdata());
 
         if (config.verify) {
-            if (body.length() < 35) {
+            if (response.body().size() < 35) {
                 std::cerr << "Warning: Response body too short on request " << i << std::endl;
             } else {
-                auto           res_payload      = body.substr(0, body.length() - 35);
-                auto           res_checksum_hex = body.substr(body.length() - 35, 16);
-                uint64_t const calculated       = xor_checksum(res_payload);
+                auto m = std::prev(e, 35);
+                std::string    res_checksum_hex(m, std::next(m, 16));
+                uint64_t const calculated = xor_checksum(b, m);
 
                 if (uint64_t received = 0; std::ispanstream(res_checksum_hex) >> std::hex >> received) {
                     if (calculated != received) {
@@ -188,9 +176,8 @@ void run_benchmark(Stream& stream, Config const& config, BenchmarkData const& da
             }
         }
 
-        auto     server_timestamp_str = body.substr(body.length() - 19);
-        uint64_t server_timestamp     = std::stoull(std::string(server_timestamp_str));
-        latencies[i]                  = client_receive_time - server_timestamp;
+        uint64_t server_timestamp = std::stoull(std::string(std::prev(e, 19), e));
+        latencies[i]              = client_receive_time - server_timestamp;
 
         buffer.consume(buffer.size());
     }
