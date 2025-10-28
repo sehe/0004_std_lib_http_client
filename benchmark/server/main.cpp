@@ -175,76 +175,34 @@ template <class Stream> void do_session(Stream& stream, ResponseCache const& cac
         }
         size_t body_len = header_parser.content_length().value_or(0);
 
-        // *** 3. Manually Read Body - Consume from Buffer First ***
-        size_t total_body_read = 0;
+        // *** 3. Manually Read Body ***
         full_body_storage.clear(); // Clear storage for this request
         if (body_len > 0) {
-            full_body_storage.reserve(body_len); // Reserve space
+            // Read the REMAINDER (if any) directly from the stream
+            if (buffer.size() < body_len)
+                buffer.commit(net::read(stream, buffer.prepare(body_len - buffer.size()), ec));
 
-            // Consume initial body part possibly read by read_header
-            size_t available_in_buffer = buffer.size();
-            size_t from_buffer         = std::min(available_in_buffer, body_len);
-
-            if (from_buffer > 0) {
-                // Copy data from buffer to our temporary storage
-                char const* initial_chunk_ptr = static_cast<char const*>(buffer.data().data());
-                full_body_storage.insert(full_body_storage.end(), initial_chunk_ptr,
-                                         initial_chunk_ptr + from_buffer);
-                total_body_read += from_buffer;
-                // Consume this initial chunk from the flat_buffer
-                buffer.consume(from_buffer);
+            if (ec == net::error::eof || ec == http::error::end_of_stream) {
+                if (buffer.size() < body_len) {
+                    std::cerr << "Error: Connection closed prematurely during body read. Read "
+                        << buffer.size() << "/" << body_len << " bytes." << std::endl;
+                    ec = http::error::partial_message;
+                    break; // Exit loop
+                }
+            }
+            if (ec) {
+                std::cerr << "Session body read error: " << ec.message() << std::endl;
+                break; // Exit inner loop on error
+            }
+            if (buffer.size() < body_len) {
+                std::cerr << "Warning: partial message but EOF/error not detected." << std::endl;
+                ec = http::error::partial_message;
+                break;
             }
 
-            // Read the REMAINDER (if any) directly from the stream
-            while (total_body_read < body_len) {
-                size_t bytes_to_read = body_len - total_body_read;
-                // Use read_some on the stream, temporarily using flat_buffer's storage via prepare/commit
-                size_t bytes_read = stream.read_some(buffer.prepare(bytes_to_read), ec);
-                buffer.commit(bytes_read); // Commit makes data available in buffer.data()
-
-                if (bytes_read > 0) {
-                    // Copy newly read data to our temporary storage
-                    char const* new_chunk_ptr = static_cast<char const*>(buffer.data().data());
-                    full_body_storage.insert(full_body_storage.end(), new_chunk_ptr,
-                                             new_chunk_ptr + bytes_read);
-                    // Consume the newly read chunk from the flat_buffer immediately
-                    buffer.consume(bytes_read);
-                }
-                total_body_read += bytes_read;
-
-                if (ec == net::error::eof || ec == http::error::end_of_stream) {
-                    if (total_body_read < body_len) {
-                        std::cerr << "Error: Connection closed prematurely during body read. Read "
-                                  << total_body_read << "/" << body_len << " bytes." << std::endl;
-                        ec = http::error::partial_message;
-                    }
-                    break; // Exit inner loop
-                }
-                if (ec) {
-                    std::cerr << "Session body read error: " << ec.message() << std::endl;
-                    break; // Exit inner loop on error
-                }
-                if (bytes_read == 0 && total_body_read < body_len) {
-                    std::cerr << "Warning: read_some returned 0 but EOF/error not detected." << std::endl;
-                    ec = http::error::partial_message;
-                    break;
-                }
-            } // End while(total_body_read < body_len)
+            std::copy_n(net::buffers_begin(buffer.data()), body_len, back_inserter(full_body_storage));
+            buffer.consume(body_len);
         } // End if(body_len > 0)
-
-        // Check for body read errors after the loop
-        if (ec && ec != net::error::eof && ec != http::error::end_of_stream) {
-            std::cerr << "Exiting session due to body read error: " << ec.message() << std::endl;
-            break; // Exit outer loop
-        }
-        // Check if we got less body than expected
-        if (total_body_read < body_len) {
-            std::cerr << "Error: Read less body data (" << total_body_read << ") than Content-Length ("
-                      << body_len << ")." << std::endl;
-            // Adjust length to what was actually read for view creation
-            body_len = total_body_read;
-            // break; // Optionally exit outer loop entirely if partial body is unacceptable
-        }
 
         // --- Body View Creation ---
         // *** Create view from the accumulated temporary storage ***
