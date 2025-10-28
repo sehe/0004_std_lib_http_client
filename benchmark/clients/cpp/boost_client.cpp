@@ -154,17 +154,19 @@ void run_benchmark(Stream& stream, Config const& config, BenchmarkData const& da
 
         if (parser.content_length()) {
             size_t body_size = *parser.content_length();
-            buffer.reserve(body_size);
-            while (buffer.size() < body_size) {
-                size_t bytes_to_read = body_size - buffer.size();
-                size_t bytes_read    = stream.read_some(buffer.prepare(bytes_to_read), ec);
-                buffer.commit(bytes_read);
-                if (ec == http::error::end_of_stream)
-                    break;
-                if (ec) {
-                    std::cerr << "Read body failed: " << ec.message() << std::endl;
-                    return;
-                }
+
+            if (buffer.size() < body_size)
+                buffer.commit(asio::read(stream, buffer.prepare(body_size - buffer.size()), ec));
+
+            if (ec == http::error::end_of_stream)
+                break;
+            if (ec) {
+                std::cerr << "Read body failed: " << ec.message() << std::endl;
+                return;
+            }
+            if (buffer.size() < body_size) {
+                std::cerr << "Partial body without EOF" << std::endl;
+                return;
             }
         }
         auto             client_receive_time = get_nanoseconds();
