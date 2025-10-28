@@ -1,6 +1,7 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/program_options.hpp>
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <spanstream>
@@ -92,11 +93,14 @@ bool read_benchmark_data(std::string const& filename, BenchmarkData& data) {
     return ifs.good();
 }
 
-uint64_t xor_checksum(std::string_view data) {
-    return std::accumulate(data.begin(), data.end(), std::uint64_t{0}, [](uint64_t acc, char c) {
-        return std::rotr(acc, 7) ^ static_cast<unsigned char>(c);
-    });
+uint64_t xor_checksum(uint64_t acc, auto b, auto e) {
+    for (auto it = b; it != e; ++it)
+        acc = std::rotr(acc, 7) ^ static_cast<unsigned char>(*it);
+    return acc;
 }
+
+uint64_t xor_checksum(auto b, auto e)        { return xor_checksum(0ul, b, e);                     } 
+uint64_t xor_checksum(std::string_view data) { return xor_checksum(0ul, data.begin(), data.end()); } 
 
 uint64_t get_nanoseconds() {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -144,53 +148,77 @@ void run_benchmark(Stream& stream, Config const& config, BenchmarkData const& da
             break;
         }
 
-        http::response_parser<http::empty_body> parser;
-        parser.skip(true);
-        http::read_header(stream, buffer, parser, ec);
+        http::response_parser<http::buffer_body> parser;
+
+        auto& response = parser.get(); // convenience shorthands
+        auto& body_val = response.body();
+
+        beast::flat_buffer buf;
+        read_header(stream, buf, parser, ec);
+
+        if (ec && ec != http::error::need_buffer) // expected
+            throw boost::system::system_error(ec);
+
+        assert(p.is_header_done());
+
+        auto content_length = parser.content_length().value();
+
+        uint64_t checksum = 0;
+        size_t   body_len = 0;
+        size_t   meta_len = config.verify ? 16 + 19 : 19;
+        // std::vector<char> block(content_length + meta_len);
+        std::vector<char> block(std::min(2048ul, content_length + meta_len));
+        std::string_view  last_block;
+
+        while (!parser.is_done()) {
+            body_val.data = block.data();
+            body_val.size = block.size();
+            http::read(stream, buf, parser, ec);
+
+            if (ec && ec != http::error::need_buffer) // expected
+                break;
+
+            size_t n  = block.size() - body_val.size;
+            body_len += n;
+
+            if (body_len >= content_length) {
+                last_block = {block.data(), n};
+                if (config.verify && n > meta_len)
+                    checksum = xor_checksum(checksum, block.data(), block.data() + n - meta_len);
+            } else if (config.verify)
+                checksum = xor_checksum(checksum, block.data(), block.data() + n);
+        }
+
+        auto client_receive_time = get_nanoseconds();
+
         if (ec) {
-            std::cerr << "Read header failed: " << ec.message() << std::endl;
+            std::cerr << "Read failed: " << ec.message() << std::endl;
             break;
         }
 
-        if (parser.content_length()) {
-            size_t body_size = *parser.content_length();
-            buffer.reserve(body_size);
-            while (buffer.size() < body_size) {
-                size_t bytes_to_read = body_size - buffer.size();
-                size_t bytes_read    = stream.read_some(buffer.prepare(bytes_to_read), ec);
-                buffer.commit(bytes_read);
-                if (ec == http::error::end_of_stream)
-                    break;
-                if (ec) {
-                    std::cerr << "Read body failed: " << ec.message() << std::endl;
-                    return;
-                }
-            }
-        }
-        auto             client_receive_time = get_nanoseconds();
-        std::string_view body(static_cast<char const*>(buffer.data().data()), buffer.size());
-
         if (config.verify) {
-            if (body.length() < 35) {
-                std::cerr << "Warning: Response body too short on request " << i << std::endl;
-            } else {
-                auto           res_payload      = body.substr(0, body.length() - 35);
-                auto           res_checksum_hex = body.substr(body.length() - 35, 16);
-                uint64_t const calculated       = xor_checksum(res_payload);
+            if (last_block.length() < meta_len)
+                std::cerr << "Warning: Last block too short for metadata " << i << std::endl;
+            else {
+                auto res_checksum_hex = last_block.substr(last_block.length() - meta_len, 16);
 
-                if (uint64_t received = 0; std::ispanstream(res_checksum_hex) >> std::hex >> received) {
-                    if (calculated != received) {
+                if (uint64_t expected = 0; std::ispanstream(res_checksum_hex) >> std::hex >> expected) {
+                    if (checksum != expected) {
                         std::cerr << "Warning: Response checksum mismatch on request " << i << std::endl;
+                        std::cerr << "Exptected: " << quoted(res_checksum_hex) << std::endl;
                     }
-                } else {
+                } else
                     std::cerr << "Warning: Response checksum cannot be parsed" << i << std::endl;
-                }
             }
         }
 
-        auto     server_timestamp_str = body.substr(body.length() - 19);
-        uint64_t server_timestamp     = std::stoull(std::string(server_timestamp_str));
-        latencies[i]                  = client_receive_time - server_timestamp;
+        if (last_block.length() < 19)
+            std::cerr << "Warning: Last block too small for timestamp metadata " << i << std::endl;
+        {
+            auto     server_timestamp_str = last_block.substr(last_block.length() - 19);
+            uint64_t server_timestamp     = std::stoull(std::string(server_timestamp_str));
+            latencies[i]                  = client_receive_time - server_timestamp;
+        }
 
         buffer.consume(buffer.size());
     }
